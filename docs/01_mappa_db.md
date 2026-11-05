@@ -39,7 +39,7 @@ Legenda:
 |---|---|
 | Istanza | `SERVER-MES\SISTEMI` (`192.168.3.205\sistemi`) |
 | DBMS | SQL Server 2016 SP3 **Express** (13.0.6300.2), Windows Server 2019. Limite di 10 GB per database. |
-| Database | `NETPRO` (letto). Esiste anche `MACCHINE`, creato il 27/09/2022: **accesso negato a `lettore`** `[DA VERIFICARE]`. |
+| Database | `NETPRO` (letto) e `MACCHINE` (letto dal 05/11/2026, stessi permessi in sola lettura): vedi §5-bis |
 | Collation | DB `Latin1_General_CI_AS`; server `…_CI_AI` |
 | Ora | Locale (Europe/Rome), colonne `datetime` **senza offset** |
 | Utente `lettore` | `db_datareader` + `db_denydatawriter`; permessi `CONNECT`, `SELECT` → **sola lettura dimostrata** |
@@ -196,6 +196,25 @@ Le righe sono stimate dai metadati. Sono elencate solo le tabelle rilevanti; le 
 
 ---
 
+## 5-bis. Database `MACCHINE` [VERIFICATO, giro 3]
+
+17 tabelle `*_IMP`, tutte con colonne `nvarchar` (date e numeri in testo), caricate da AppDBI (`AppDBI_Browind`, `AppDBI_Silos`, `AppDBI_FMT`). Nessuna vista, procedura o FK.
+
+| Tabella | Righe | Periodo | Contenuto |
+|---|---|---|---|
+| `K800F_IMP` | 20.838 | **08/01/2022 – 31/01/2022** | Forno Brovind, **una riga al minuto**: `RecipeROASTER`, `LOTTO`, `SetpointC`, `ToastingC`, `DryingC`, `Product1C`, `Product2C`, **`TimeToasting`**, `LoadingBulkheadmm`, ventole %, `GasValvePercent`, mixer, `status` (sempre `Running`) |
+| `K800P_IMP` | 19.104 | 10/01/2022 – 31/01/2022 | Raffinatrici 1 e 2: ricetta, lotto, stato, velocità %, temperature prodotto e acqua, livello deposito |
+| `SILOS8…14CR_IMP` | ~52.000 ciascuna | es. SILOS8: 20/09/2022 – 31/03/2023 | temperatura silos crema (`DATAn`, `ORAn`, `MILLISECONDIn`, `TEMPn`) |
+| `SILOS8…14PP_IMP` | ~90.000 ciascuna | es. SILOS8: 09/12/2022 – 05/07/2023 | come sopra; valori **corrotti** in alcune righe |
+| `FMT_IMP` | 13 | 10/11/2022 – 30/11/2022 | ordini di prova linea FMT |
+
+Conclusioni:
+- Sono **import di avviamento o di test**: lotti `PROVA`, ricetta cooler `prova`, nessun dato dopo il 2023. **Non sono una fonte viva** per la dashboard.
+- Però dimostrano che il **supervisore Brovind registra un log al minuto con lotto, ricetta, temperatura e tempo di tostatura**, cioè il dato tipico di un CCP di tostatura. Se quel log è ancora attivo sul supervisore (export CSV letto da `AppDBI_Browind`), potrebbe diventare la fonte CCP del forno. `[DA VERIFICARE con il Config.xml di AppDBI_Browind]`
+- Le ricette viste (`split calif`, `rottame iran`, `sgusciato nutw`, `Tostatura forte`, `sicilia mec`, `mandorla pelata`, `lavaggio`…) mostrano che i parametri CCP dipendono dalla ricetta/prodotto: i limiti dovranno essere **per ricetta**.
+
+---
+
 ## 6. Relazioni (diagramma ER)
 
 Non ci sono foreign key dichiarate. Le relazioni sotto sono **[DEDOTTE]** dai nomi e dai valori, da confermare.
@@ -295,7 +314,7 @@ erDiagram
 | A4 | **Stato forno e raffinatrice**: `STATO_CLC = IF(STATO_MACCHINA == 0, 1, 0)`. "Attivo" corrisponde a `STATO_MACCHINA = 0`, mentre lo storico (`FVALUE07`) contiene il valore grezzo. Significato di 0 da chiarire. | `FDI_Siemens\xml\Config.xml` |
 | A5 | **FX10130**: solo 52 righe HIST negli ultimi 7 giorni (attese 672) | `24_fprocessdata_canali` |
 | A6 | Timestamp senza fuso orario: un'ora ambigua al passaggio all'ora solare | colonne `datetime` |
-| A7 | DB `MACCHINE` sull'istanza, contenuto ignoto, non accessibile a `lettore` | `sys.databases` |
+| A7 | DB `MACCHINE`: import storici una tantum (2022–2023), **non alimentati**; `SILOS8PP_IMP` contiene valori corrotti (caratteri non validi in `DATA8`) | giro 3 |
 
 ---
 
@@ -319,7 +338,7 @@ In ogni caso **servono dati che il MES non ha**, da gestire in configurazione da
 
 ## 10. Domande aperte
 
-1. **Database `MACCHINE`**: l'IT può dare a `lettore` la sola lettura (`db_datareader`), così da verificarne il contenuto?
+1. **Log del supervisore Brovind**: il forno registra ancora il log al minuto (come in `K800F_IMP`, gennaio 2022)? Dove viene salvato (percorso CSV o database del supervisore)?
 2. **Codifica `STATO_MACCHINA`** del forno e della raffinatrice: quali valori significano marcia, fermo, allarme, setup? Serve il manuale PLC Brovind o il fornitore. Stesso discorso per `CurrentSmState` di FX10130 (valori visti: `Ready`, `Selecting`) e `STATO` di Cimbria.
 3. **Linee**: si usano i centri NetPro (`MISCRAFF_01` = forno + raffinatrice, `SELEZIONATRICI` = FX10130 + HYPERSORTL4) oppure un raggruppamento diverso?
 4. **Turni reali** di ciascuna macchina, e se si lavora il sabato.
