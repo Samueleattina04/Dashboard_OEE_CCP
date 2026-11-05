@@ -210,7 +210,14 @@ Le righe sono stimate dai metadati. Sono elencate solo le tabelle rilevanti; le 
 
 Conclusioni:
 - Sono **import di avviamento o di test**: lotti `PROVA`, ricetta cooler `prova`, nessun dato dopo il 2023. **Non sono una fonte viva** per la dashboard.
-- Però dimostrano che il **supervisore Brovind registra un log al minuto con lotto, ricetta, temperatura e tempo di tostatura**, cioè il dato tipico di un CCP di tostatura. Se quel log è ancora attivo sul supervisore (export CSV letto da `AppDBI_Browind`), potrebbe diventare la fonte CCP del forno. `[DA VERIFICARE con il Config.xml di AppDBI_Browind]`
+- **Fonte dei dati** (da `AppDBI_Browind\xml\Config.xml` e `AppDBI_Silos\xml\Config.xml`) [VERIFICATO]:
+  - forno: file `\\192.168.3.10\Forno\ArchiveKing800*.CSV`, separatore `;`, prime 2 righe saltate, import ogni 30 s;
+  - raffinatrici: `\\192.168.3.10\Pasta\ArchivePasteLine*.CSV`;
+  - silos: `\\192.168.3.10\Mes\IP_SilosPastapura192.168.3.241\datalog` e `…242\datalog` (`PP-Sn*.CSV`);
+  - in tutti i casi `DeleteFile = true`: **FDI cancella i CSV dopo l'import**.
+
+  Poiché le tabelle non hanno dati dopo il 2022–2023, probabilmente il supervisore ha smesso di depositare i file in quelle cartelle, oppure ha cambiato percorso. `[DA VERIFICARE sul PC 192.168.3.10]`
+- Quindi il **supervisore Brovind ha registrato (almeno nel 2022) un log al minuto con lotto, ricetta, temperatura e tempo di tostatura**, cioè il dato tipico di un CCP di tostatura. Se quel log è ancora attivo sul supervisore (export CSV letto da `AppDBI_Browind`), potrebbe diventare la fonte CCP del forno. `[DA VERIFICARE con il Config.xml di AppDBI_Browind]`
 - Le ricette viste (`split calif`, `rottame iran`, `sgusciato nutw`, `Tostatura forte`, `sicilia mec`, `mandorla pelata`, `lavaggio`…) mostrano che i parametri CCP dipendono dalla ricetta/prodotto: i limiti dovranno essere **per ricetta**.
 
 ---
@@ -314,6 +321,7 @@ erDiagram
 | A4 | **Stato forno e raffinatrice**: `STATO_CLC = IF(STATO_MACCHINA == 0, 1, 0)`. "Attivo" corrisponde a `STATO_MACCHINA = 0`, mentre lo storico (`FVALUE07`) contiene il valore grezzo. Significato di 0 da chiarire. | `FDI_Siemens\xml\Config.xml` |
 | A5 | **FX10130**: solo 52 righe HIST negli ultimi 7 giorni (attese 672) | `24_fprocessdata_canali` |
 | A6 | Timestamp senza fuso orario: un'ora ambigua al passaggio all'ora solare | colonne `datetime` |
+| A8 | **Sicurezza**: i config AppDBI contengono in chiaro le credenziali SQL degli utenti applicativi NetPro e FDI (con permessi di scrittura sul MES), con password banali. Da ruotare e proteggere (NIS2). | `AppDBI_*\xml\Config.xml` |
 | A7 | DB `MACCHINE`: import storici una tantum (2022–2023), **non alimentati**; `SILOS8PP_IMP` contiene valori corrotti (caratteri non validi in `DATA8`) | giro 3 |
 
 ---
