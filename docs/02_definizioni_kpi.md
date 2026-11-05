@@ -1,6 +1,6 @@
 # 02 — Modello dati e definizioni KPI
 
-Stato: **bozza per approvazione (fine Fase 2)** — 05/11/2026
+Stato: **approvata il 05/11/2026** con le decisioni in §12 (punti 6 e 7 restano aperti, con il default prudente)
 Base: `docs/01_mappa_db.md` (approvata), strada **A** (storico HIST di `FPROCESSDATA`).
 
 Legenda: `[DA VERIFICARE]` = assunzione da confermare; **(Admin)** = parametro gestito nella dashboard.
@@ -50,7 +50,7 @@ Le regole sono valutate in ordine; vale la prima che corrisponde.
 | `FVALUE01` | Stato |
 |---|---|
 | `Selecting` | `MARCIA` |
-| `Cleaning` | `MARCIA` `[DA VERIFICARE]`. Il manuale dice che avviene all'avvio e "ciclicamente durante la selezione"; proposta: marcia, configurabile |
+| `Cleaning` | `MARCIA` (confermato) |
 | `Ready` | `FERMO` |
 | `ReadyError`, `SelectionError`, `CleaningError`, `RecipeError`, `ConnectError`, `ConfigureError`, `MachineDataError`, `Emergency` | `ALLARME` |
 | `Configure`, `Connect`, `MachineData`, `Recipe`, `Setup`, `FwUpgrade` | `AVVIO` |
@@ -72,13 +72,7 @@ Il forno **non espone un segnale di marcia** (anomalia A9: `FVALUE07` è lo stat
 - **S_marcia (Admin)**: nessun valore inventato. Si sceglie dopo l'analisi della distribuzione storica delle temperature (query Q4, §7). Dai dati visti: le giornate di produzione del 2022 lavoravano a setpoint 140–150 °C, mentre a forno spento la temperatura scende a 15–50 °C. `[DA VERIFICARE con la produzione]`
 - **Limite noto**: un forno "in temperatura" può essere in preriscaldo o a vuoto. Il KPI va quindi letto come **ore con forno in temperatura di lavoro**. Si potrà affinare più avanti, per esempio con `BulkHead_Opening` se Qualitas lo storicizza.
 
-**HYPERSORTL4 — Cimbria Hypersort L4** (fonte: `FVALUE07` = `STATO` Cimbria)
-
-| Condizione | Stato |
-|---|---|
-| `FVALUE07` ≠ 0 | `MARCIA` (stessa logica della formula FDI `CIMBRIA_STATO_CLC`) `[DA VERIFICARE: codifica Cimbria]` |
-| `FVALUE07` = 0 | `FERMO` |
-| vuoto | `SENZA_DATO`, cioè **tutto il periodo dal 28/01/2026** (anomalia A1) |
+**HYPERSORTL4**: **fuori perimetro** (decisione del 05/11/2026).
 
 **BROVRAF — Raffinatrice** (fonte: `FVALUE07`/`FVALUE08` = velocità motore 1/2)
 
@@ -94,7 +88,8 @@ Il forno **non espone un segnale di marcia** (anomalia A9: `FVALUE07` è lo stat
 FDI scrive una riga ogni 15 minuti (`TIMERHIST` = 900 s) con i valori **istantanei** di quel momento.
 
 - Il campione al tempo `t` rappresenta l'intervallo **[t, t_succ)**, dove `t_succ` è il campione successivo della stessa macchina.
-- Se `t_succ − t` > **G_max** (Admin, proposta **20 minuti**, cioè 15 più la tolleranza), il campione copre solo [t, t + 15 min) e il resto è `SENZA_DATO`.
+- **Caso normale: record presente ma campi vuoti.** FDI scrive un record ogni 15 minuti anche quando la macchina non comunica (es. HYPERSORTL4 dal 28/01/2026). Se il campo usato dalla regola di stato è **vuoto o non valido**, l'intervallo è `SENZA_DATO`.
+- **Caso raro: record mancante.** Si è già visto per FX10130, con 52 righe in 7 giorni invece di 672. Se `t_succ − t` > **G_max** (Admin, **20 minuti**), il campione copre solo [t, t + 15 min) e il resto è `SENZA_DATO`.
 - **Incertezza**: ogni cambio di stato è noto con un'approssimazione **fino a 15 minuti**. La dashboard lo dichiara nel tooltip ("risoluzione 15 min").
 - **Fuso orario**: `FTIMESTAMP` è ora locale senza offset. Viene convertito in UTC con il fuso Europe/Rome. Nell'ora ripetuta di fine ottobre l'ambiguità si risolve con l'ordine dei campioni (`FTIMESTAMP`, `FROW`). Si conservano sia il valore originale sia quello UTC; la visualizzazione è sempre in Europe/Rome.
 - **Numeri in testo**: `FVALUEnn` usa la virgola decimale. La conversione sostituisce `,` con `.` e converte in `DECIMAL(15,5)` **senza arrotondare**, conservando il testo originale. Se la conversione fallisce, lo stato del campione è `SENZA_DATO` e il campione viene segnalato.
@@ -160,8 +155,7 @@ Questo equivale a pesare l'OEE di ogni periodo sul tempo pianificato.
 |---|---|---|---|---|---|---|
 | FX10130 | ✅ | ✅ con turni (Admin) | ✅ con capacità (Admin) | ⚠️ vedi sotto | ⚠️ | campioni irregolari (A5): copertura da mostrare |
 | FORNOKING500 | ✅ (proxy temperatura) | ✅ con turni | ❌ nessuna quantità | ❌ | ❌ → solo D | quantità da registrazioni manuali (parcheggiate) |
-| HYPERSORTL4 | ✅ fino al 28/01/2026 | ✅ storico | ⚠️ kg/h istantanei, non contatori | ❌ | ❌ | da gennaio 2026 senza dati |
-| BROVRAF | ⚠️ dati non affidabili | — | ❌ | ❌ | ❌ | anomalia A3 |
+| BROVRAF | ⏸ sospesa | — | ❌ | ❌ | ❌ | anomalia A3, da rivedere più avanti |
 
 **FX10130, produzione e qualità**
 - **Produzione in ingresso** = Δ(`FNVALUE04` + `FNVALUE06`) + Δ(`FNVALUE03` + `FNVALUE05`), cioè kg selezionati più kg scartati delle sezioni 1 e 2. Si usano le sezioni, non i totali `FNVALUE07`/`08`, per l'anomalia A2.
@@ -210,7 +204,6 @@ Si predispone solo la struttura. Contenuti e limiti verranno definiti con la Qua
 | Dato | Stato | Gestione |
 |---|---|---|
 | Stato marcia forno | assente | proxy temperatura, soglia **(Admin)** |
-| Codifica `STATO` Cimbria | ipotesi ≠ 0 = marcia | `[DA VERIFICARE]` |
 | Turni / calendario | assente nel MES | **(Admin)** |
 | Capacità nominale kg/h | assente | **(Admin)**, storicizzata |
 | Causali di fermo | assenti | **(Admin)**, assegnazione parcheggiata |
@@ -229,7 +222,7 @@ Regole comuni:
 - isolamento **READ COMMITTED** (default), per non leggere righe non confermate;
 - `LOCK_TIMEOUT` 5 s e timeout di comando 30 s; utente `lettore`.
 
-**Q1 — Estrazione incrementale per macchina** (job ogni 5 minuti; parametri: macchina, ultimo `FTIMESTAMP` già importato)
+**Q1 — Estrazione incrementale per macchina** (job **ogni 15 minuti**, la stessa frequenza con cui FDI scrive; parametri: macchina, ultimo `FTIMESTAMP` già importato)
 ```sql
 SELECT FOBJECT, FCHANNEL, FTIMESTAMP, FROW, FBATCH,
        FVALUE01, FVALUE02, FVALUE03, FVALUE04, FVALUE05, FVALUE06, FVALUE07,
@@ -247,17 +240,7 @@ Per ogni macchina si leggono solo le colonne della sua mappa (§4 della mappa DB
 
 È la stessa query di Q1, con `FTIMESTAMP >= ? AND FTIMESTAMP < ?` (inizio e fine del mese). Carico stimato: circa 2.900 righe al mese per macchina.
 
-**Q3 — Stato attuale per la vista "Stato macchine"** (ogni 60 s, solo lettura, nessuna storicizzazione; ~30 righe)
-```sql
-SELECT FIOLINE, FOBJECT, FDESCR, FVALUE, FREADDATE
-FROM dbo.FIOLINES
-WHERE FOBJECT IN (?, ?, ?, ?);
-
-SELECT MACCHINA, DESCRIZIONE, STATO_FISICO, ORA_ST_FISICO, FCODE01, ORA_LETTURA
-FROM dbo.MACCHINE
-WHERE MACCHINA IN (?, ?, ?, ?);
-```
-L'ultimo campione HIST di Q1 basta per lo stato con un ritardo fino a 15 minuti. Q3 serve per la vista quasi in tempo reale, in particolare per `FCODE01` = stato testuale di FX10130 e per i `FREADDATE`, che indicano un connettore fermo.
+**Q3 — (eliminata).** Decisione del 05/11/2026: il MES non va sollecitato oltre il necessario. La vista "Stato macchine" usa **l'ultimo campione HIST** già importato da Q1, con un ritardo massimo di circa 15 minuti, e mostra "dati aggiornati alle hh:mm". La pagina si aggiorna ogni 60 s leggendo **solo il DB applicativo**.
 
 **Q4 — Esplorazione per la soglia del forno** (una tantum, eseguita dallo script di scoperta, non dall'app)
 ```sql
@@ -318,7 +301,7 @@ erDiagram
 | `log_accessi`, `log_export` | chi, cosa, quando, filtri applicati (NIS2) |
 
 Job:
-- **ogni 5 minuti**: Q1 per macchina, inserimento in `campioni_mes`, ricalcolo di intervalli e aggregati delle ore toccate;
+- **ogni 15 minuti**: Q1 per macchina (3 query di poche righe), inserimento in `campioni_mes`, ricalcolo di intervalli e aggregati delle ore toccate;
 - **ogni notte**: ricalcolo degli ultimi 7 giorni, per righe arrivate in ritardo o regole modificate;
 - **su richiesta di un Admin**: ricalcolo storico dopo un cambio di regole.
 
@@ -369,3 +352,22 @@ Volume stimato: ~35.000 campioni l'anno per macchina, quindi le viste sui 12 mes
 - **Registrazioni manuali degli operatori** (timestamp disponibili): servono per quantità del forno, causali di fermo e conferma degli stati. Da esplorare dopo i primi dati di OEE.
 - **Richieste a Qualitas e Brovind**: frequenza HIST più alta, storicizzazione di `Time_Permanence`, `BulkHead_Opening` e ricetta; correzione delle anomalie A1–A5, A9 e A10.
 - **CCP**: definizione con la Qualità (§5).
+
+## 12. Decisioni del 05/11/2026
+
+| # | Tema | Decisione |
+|---|---|---|
+| 1 | Regole FX10130 | Confermate; **`Cleaning` = marcia** |
+| 2 | Forno | Confermato "in funzione = temperatura di tostatura ≥ soglia". Soglia da scegliere con Q4 (`discovery/sql_giro4`) |
+| 3 | HYPERSORTL4 | **Fuori perimetro** |
+| 4 | BROVRAF | **Sospesa**, da rivedere più avanti |
+| 5 | Buchi | FDI scrive un record ogni 15 min, ma con **campi vuoti**: campi vuoti = `SENZA_DATO`. Resta anche la regola dei 20 minuti per i record mancanti |
+| 6 | Qualità selezionatrice | **Aperta**: per ora Q = n.d. e OEE FX10130 = n.d.; si mostrano D, P e % scarto di selezione |
+| 7 | MTBF/MTTR | **Non pubblicati** per ora (vedi spiegazione sotto) |
+| 8 | Carico MES | Nessuna lettura in tempo reale: **una lettura ogni 15 minuti per macchina** (Q1), il resto dal DB applicativo |
+
+**MTBF / MTTR in breve**
+- **MTBF** (tempo medio tra guasti) = ore di marcia / numero di guasti. Indica ogni quanto, in media, la macchina si guasta.
+- **MTTR** (tempo medio di riparazione) = ore totali di guasto / numero di guasti. Indica quanto dura in media un guasto.
+
+Servono a valutare affidabilità e manutenzione. Con campioni ogni 15 minuti i guasti brevi non si vedono, quindi i valori sarebbero fuorvianti: si attivano quando ci saranno dati più fini o le registrazioni manuali.

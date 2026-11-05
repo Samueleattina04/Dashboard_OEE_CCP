@@ -1,0 +1,20 @@
+-- Giro 4 - FX10130: valori di CurrentSmState (FVALUE01) e copertura negli ultimi 12 mesi,
+-- per verificare le regole di stato e i record mancanti (anomalia A5).
+SET LOCK_TIMEOUT 5000;
+SET NOCOUNT ON;
+
+DECLARE @da datetime = DATEADD(MONTH, -12, CAST(GETDATE() AS date));
+
+SELECT ISNULL(NULLIF(LTRIM(RTRIM(FVALUE01)), N''), N'(vuoto)') AS stato, COUNT(*) AS campioni,
+       MIN(FTIMESTAMP) AS primo, MAX(FTIMESTAMP) AS ultimo
+FROM dbo.FPROCESSDATA
+WHERE FOBJECT = N'FX10130' AND FOBJTYPE = N'MAC' AND FCHANNEL = N'HIST' AND FTIMESTAMP >= @da
+GROUP BY ISNULL(NULLIF(LTRIM(RTRIM(FVALUE01)), N''), N'(vuoto)')
+ORDER BY campioni DESC;
+
+SELECT CONVERT(char(7), FTIMESTAMP, 120) AS mese, COUNT(*) AS campioni,
+       COUNT(DISTINCT CAST(FTIMESTAMP AS date)) AS giorni_con_dati
+FROM dbo.FPROCESSDATA
+WHERE FOBJECT = N'FX10130' AND FOBJTYPE = N'MAC' AND FCHANNEL = N'HIST' AND FTIMESTAMP >= @da
+GROUP BY CONVERT(char(7), FTIMESTAMP, 120)
+ORDER BY mese;
