@@ -216,7 +216,13 @@ Conclusioni:
   - silos: `\\192.168.3.10\Mes\IP_SilosPastapura192.168.3.241\datalog` e `…242\datalog` (`PP-Sn*.CSV`);
   - in tutti i casi `DeleteFile = true`: **FDI cancella i CSV dopo l'import**.
 
-  Poiché le tabelle non hanno dati dopo il 2022–2023, probabilmente il supervisore ha smesso di depositare i file in quelle cartelle, oppure ha cambiato percorso. `[DA VERIFICARE sul PC 192.168.3.10]`
+  Verifica del 05/11/2026 su `192.168.3.10`, che è un NAS:
+  - `\\Forno\BK` contiene archivi **mensili** `ArchiveKing800_<mese>_<anno>.csv` da 11/2021 a **07/2022** (≈ 1,3–3,5 MB ciascuno);
+  - `\\Pasta\BK` contiene `ArchivePasteLine_<mese>_<anno>.csv` da 11/2021 a **09/2022**;
+  - dopo quelle date **non arrivano più file**;
+  - `\\Forno\PowerBILink` e `\\Forno\MagicBoxElaborato` contengono Excel gestionali (ordini, food cost, giacenze, `Q_ElencoNC3tre.xlsx`), **non** log del forno.
+
+  Conclusione: **oggi non esiste un log al minuto del forno disponibile in rete**. Il supervisore Brovind potrebbe però continuare a scrivere l'archivio mensile in locale. `[DA VERIFICARE con Brovind]`
 - Quindi il **supervisore Brovind ha registrato (almeno nel 2022) un log al minuto con lotto, ricetta, temperatura e tempo di tostatura**, cioè il dato tipico di un CCP di tostatura. Se quel log è ancora attivo sul supervisore (export CSV letto da `AppDBI_Browind`), potrebbe diventare la fonte CCP del forno. `[DA VERIFICARE con il Config.xml di AppDBI_Browind]`
 - Le ricette viste (`split calif`, `rottame iran`, `sgusciato nutw`, `Tostatura forte`, `sicilia mec`, `mandorla pelata`, `lavaggio`…) mostrano che i parametri CCP dipendono dalla ricetta/prodotto: i limiti dovranno essere **per ricetta**.
 
