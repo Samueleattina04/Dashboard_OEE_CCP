@@ -1,6 +1,6 @@
 # 01 — Mappa del database MES (Qualitas NetPro)
 
-Stato: **bozza per approvazione (fine Fase 1)** — 05/11/2026
+Stato: **approvata il 05/11/2026** (con le risposte riportate in §11)
 
 Fonti:
 - query in sola lettura `discovery/sql` (giro 1) e `discovery/sql_giro2` (giro 2) sul DB `NETPRO`;
@@ -102,11 +102,13 @@ Dal 03/10/2023; circa 96 righe al giorno.
 | `FVALUE04` | `Temp_Cyclone` | temperatura ciclone (`TCYCL`) |
 | `FVALUE05` | `Temp_Prod1` | temperatura prodotto 1 (`TPRO1`) |
 | `FVALUE06` | `Temp_Prod2` | temperatura prodotto 2 (`TPRO2`) |
-| `FVALUE07` | `STATO_MACCHINA` | stato grezzo del PLC (intero) — codifica `[DA VERIFICARE]` |
+| `FVALUE07` | `STATO_MACCHINA` (in realtà `STATO_ORDINE` PLC, vedi A9) | 0 = ordine inviato, 1 = in lavorazione, 2 = terminato; **non è lo stato di marcia** |
 
 Verifica: alle 13:01:58 del 05/11/2026, `FVALUE01–06` = 42,2 / 48,9 / 21,8 / 17,2 / 40,6 / 30,8. Nello stesso momento `FIOLINES` riportava TDRY 42,2 / TTOST 48,8 / TCOOL 21,8 / TCYCL 17,2 / TPRO1 40,5 / TPRO2 30,8.
 
-Variabili lette dal PLC ma **non** storicizzate: `Time_Permanence` (tempo di permanenza), `BulkHead_Opening`, `NOME_RICETTA`, `LOTTO`, `CODICE_ARTICOLO`.
+Variabili lette dal PLC ma **non** storicizzate: `Time_Permanence` (tempo di permanenza **impostato**), `BulkHead_Opening`, `NOME_RICETTA`, `LOTTO`, `CODICE_ARTICOLO`. Il forno ha 56 ricette (elenco `RicetteForno_2026_09_25.xlsx`), ma **la ricetta in uso non è nello storico**.
+
+**Il forno non espone un segnale di marcia/fermo**: il tempo in funzione va dedotto dalle temperature (vedi `02_definizioni_kpi.md`).
 
 ### BROVRAF — Raffinatrice Brovind linea pasta (PLC `L_PASTA`)
 Dal 03/10/2023. **Tutti i valori a 0**; l'ultima lettura in `FIOLINES` è del 13/05/2025 `[DA VERIFICARE: PLC non collegato?]`.
@@ -127,7 +129,7 @@ Dal 14/02/2024; **righe irregolari** (52 negli ultimi 7 giorni invece di 672) `[
 | Colonna | Variabile OPC | Significato |
 |---|---|---|
 | `FBATCH` | `CurrentRecipe` | ricetta/programma in uso |
-| `FVALUE01` | `CurrentSmState` | stato macchina in testo (`Ready`, `Selecting`, …) |
+| `FVALUE01` | `CurrentSmState` | stato macchina in testo. Valori da manuale: `Selecting` (in selezione), `Ready`, `ReadyError`, `Cleaning` (pulizia, anche ciclica durante la selezione), `Emergency`, `Offline`, `Configure`, `Connect`, `MachineData`, `Recipe`, `Setup`, `FwUpgrade` e varianti `…Error` |
 | `FVALUE02` | `RegulatorPressureString` | pressione aria in testo ("3,97 bar") |
 | `FVALUE03` / `04` | `S1_` / `S2_HopperLevel` | livello tramoggia sez. 1 / 2 (`EMPTY`/`LOW`/`FULL`) |
 | `FNVALUE01` / `02` | `S1_` / `S2_PortataKgOra` | portata kg/h sezione 1 / 2 |
@@ -327,6 +329,10 @@ erDiagram
 | A4 | **Stato forno e raffinatrice**: `STATO_CLC = IF(STATO_MACCHINA == 0, 1, 0)`. "Attivo" corrisponde a `STATO_MACCHINA = 0`, mentre lo storico (`FVALUE07`) contiene il valore grezzo. Significato di 0 da chiarire. | `FDI_Siemens\xml\Config.xml` |
 | A5 | **FX10130**: solo 52 righe HIST negli ultimi 7 giorni (attese 672) | `24_fprocessdata_canali` |
 | A6 | Timestamp senza fuso orario: un'ora ambigua al passaggio all'ora solare | colonne `datetime` |
+| A9 | **Forno: la variabile che FDI chiama `STATO_MACCHINA` (DB1000, offset 68) è in realtà `STATO_ORDINE`** secondo il documento Brovind (0 = ordine inviato, 1 = in lavorazione, 2 = terminato). Non indica marcia/fermo. Poiché NetPro non invia ordini al forno, vale sempre 0. Ne segue che `FVALUE07` **non è uno stato macchina** e la formula FDI `STATO_CLC` (A4) non è significativa. | "Scambio dati Forno King 500 … con MES V1.0" |
+| A10 | **FX10130: FDI calcola lo stato da `Active`**, che secondo il manuale 3UVision significa "hardware riconosciuto", non "in selezione". Lo stato di lavoro corretto è `CurrentSmState = Selecting` (storicizzato in `FVALUE01`). | Manuale "Fenix OPC" |
+| A11 | FX10130: secondo il manuale, i kg selezionati e scartati sono **indicativi, senza valore fiscale**, e i contatori si azzerano con `DO_RESET_PRODUCT` | Manuale "Fenix OPC" |
+| A12 | Indirizzo PLC del forno: il documento Brovind riporta `11.11.11.31`, il config FDI `11.11.11.11` (i dati comunque arrivano) | documento Brovind / config FDI |
 | A8 | **Sicurezza**: i config AppDBI contengono in chiaro le credenziali SQL degli utenti applicativi NetPro e FDI (con permessi di scrittura sul MES), con password banali. Da ruotare e proteggere (NIS2). | `AppDBI_*\xml\Config.xml` |
 | A7 | DB `MACCHINE`: import storici una tantum (2022–2023), **non alimentati**; `SILOS8PP_IMP` contiene valori corrotti (caratteri non validi in `DATA8`) | giro 3 |
 
@@ -364,3 +370,19 @@ In ogni caso **servono dati che il MES non ha**, da gestire in configurazione da
    - serve anche il tempo di permanenza (`Time_Permanence`, oggi non storicizzato)?
 7. Le anomalie **A1–A5** vanno segnalate a Qualitas? In particolare A2, che riguarda il calcolo degli scarti.
 8. Quale **strada (A/B/C/D)** per l'OEE preferite approfondire in Fase 2? La mia proposta è **A + B** subito, e **C** da chiedere a Qualitas in parallelo.
+
+---
+
+## 11. Risposte del 05/11/2026 (approvazione)
+
+| Tema | Decisione |
+|---|---|
+| Strada OEE | **A: storico HIST di `FPROCESSDATA`** (alimentato costantemente). Primo obiettivo: misurare **quanto ogni macchina è in funzione ogni giorno** sulla base dei dati oggettivi FDI. L'OEE si costruisce poi aggiungendo dalla dashboard i dati mancanti. |
+| Dati assenti nel MES | Capacità nominale, calendario turni, tempi pianificati, causali di fermo, limiti CCP: **gestiti nella dashboard** (DB applicativo), fuori dal MES |
+| Registrazioni manuali | Esistono timestamp di registrazioni manuali degli operatori sulle macchine: **parcheggiato**, da esplorare più avanti |
+| Log al minuto Brovind | Non più attivo: si usa `FPROCESSDATA` |
+| Codifica stati | Forniti: documento di scambio dati del Forno King 500 e manuale OPC Fenix (FX10130) |
+| Linee | Per ora **OEE per singola macchina**; nessun raggruppamento in linee |
+| Turni e capacità | Da gestire nella dashboard |
+| CCP | Da approfondire dopo i primi dati di OEE |
+| Anomalie A1–A5 | Da valutare più avanti |
