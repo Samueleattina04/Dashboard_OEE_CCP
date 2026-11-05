@@ -1,6 +1,6 @@
 # Fase 1 — Piano di scoperta del database MES
 
-Stato: **in corso** — giri 1 e 2 eseguiti il 05/11/2026; in attesa dei file di configurazione FDI.
+Stato: **completato**: vedi `docs/01_mappa_db.md` (in attesa di approvazione).
 
 ## Contesto acquisito
 

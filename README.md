@@ -5,7 +5,7 @@ e CCP HACCP (Qualità).
 
 ## Stato del progetto
 
-- [ ] Fase 1 — Scoperta database (in corso: vedi `docs/00_piano_fase1.md` e `discovery/LEGGIMI.md`)
+- [x] Fase 1 — Scoperta database: `docs/01_mappa_db.md` (in attesa di approvazione)
 - [ ] Fase 2 — Definizioni KPI e modello dati
 - [ ] Fase 3 — Sviluppo
 - [ ] Fase 4 — Verifica e riconciliazione
