@@ -4,7 +4,7 @@
 !.env.example
 
 # Output della scoperta DB (può contenere dati di produzione / nomi operatori)
-discovery/output/
+discovery/output*/
 
 # Python
 __pycache__/

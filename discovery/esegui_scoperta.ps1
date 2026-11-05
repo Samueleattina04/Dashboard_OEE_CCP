@@ -12,18 +12,20 @@
 
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File .\esegui_scoperta.ps1
+  powershell -ExecutionPolicy Bypass -File .\esegui_scoperta.ps1 -Cartella sql_giro2
 #>
 param(
     [string]$Server   = '192.168.3.205\sistemi',
     [string]$Database = 'Netpro',
     [string]$Utente   = 'lettore',
-    [int]   $TimeoutSecondi = 60
+    [int]   $TimeoutSecondi = 60,
+    [string]$Cartella = 'sql'          # 'sql' = primo giro, 'sql_giro2' = secondo giro
 )
 
 $ErrorActionPreference = 'Stop'
 $radice  = Split-Path -Parent $MyInvocation.MyCommand.Path
-$cartSql = Join-Path $radice 'sql'
-$cartOut = Join-Path $radice 'output'
+$cartSql = Join-Path $radice $Cartella
+$cartOut = Join-Path $radice ('output_' + $Cartella)
 New-Item -ItemType Directory -Force -Path $cartOut | Out-Null
 $log = Join-Path $cartOut '_registro_esecuzione.txt'
 

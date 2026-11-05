@@ -1,6 +1,6 @@
 # Fase 1 — Piano di scoperta del database MES
 
-Stato: **in corso** — in attesa dell'output degli script `discovery/`.
+Stato: **in corso** — giro 1 eseguito il 05/11/2026; in attesa del giro 2 (`discovery/sql_giro2`).
 
 ## Contesto acquisito
 
@@ -64,3 +64,34 @@ Ipotesi basate solo sui nomi. **Non verranno usate finché non le confermate.**
 6. Turni: orari, e se ci sono turni diversi nel weekend.
 7. Il modulo NetPro "Qualità/HACCP" (se presente) registra deviazioni e azioni correttive?
 8. Avete report nativi NetPro di OEE e CCP da usare come riferimento (in Fase 4)?
+
+## Esito del giro 1 (05/11/2026)
+
+| Voce | Risultato |
+|---|---|
+| DBMS | **SQL Server 2016 SP3 Express** (13.0.6300.2) su Windows Server 2019, istanza `SERVER-MES\SISTEMI`, DB `NETPRO` |
+| Collation | `Latin1_General_CI_AS` (database). Il server usa una collation diversa (`CI_AI`). |
+| Fuso | Il server registra l'ora locale (offset +01:00): `FTIMESTAMP` è in ora di Roma, **senza offset**. Al cambio ora legale/solare può creare ambiguità. `[DA VERIFICARE]` |
+| Utente `lettore` | Ruoli `db_datareader` + `db_denydatawriter`; permessi CONNECT e SELECT → **sola lettura dimostrata** (servirà in Fase 4) |
+| Oggetti | 321 tabelle, **nessuna vista, nessuna procedura, nessuna FK dichiarata**. Le relazioni vanno ricostruite dai nomi e confermate. |
+| Tabelle popolate | Poche: `FPROCESSDATA` (~2,1 mln), `SITUAZIONI` (~25 mila), `LOTTI`, `FS_MATERIALS`, `EVENTI` (~1.400), `MACCHINE` (26)… La maggior parte delle tabelle è vuota. |
+
+### FPROCESSDATA
+- PK cluster: `FOBJECT, FOBJTYPE, FCHANNEL, FTIMESTAMP, FROW`, quindi le query per macchina e intervallo di date sono efficienti.
+- Colonne generiche: `FVALUE01…100` (testo) e `FNVALUE01…100` (numeriche, `numeric(15,5)`), più `FBATCH`, `FSTATUS`, `FMACHINE`, `FTASK`, `FCALCTIME`, `FCHARTSTATUS`.
+  **Il significato di ogni colonna dipende dalla macchina.** Serve la mappa dei `Config.json` di FDI.
+- Le ultime 200 righe di `HYPERSORTL4` (canale `HIST`, una ogni 15 minuti) hanno **tutti i valori vuoti** `[DA VERIFICARE: macchina ferma o connettore senza dati?]`.
+
+### Tabelle MES "classiche" candidate per l'OEE
+- `MACCHINE`: anagrafica con `T_CICLO`, `FPRODRATE`, `STATO_FISICO`/`STATO_LOGICO`, `FLINE`, turni, `EFFICIENZA`.
+- `SITUAZIONI`: periodi consuntivati per macchina, con `ORA_INIZIO`/`ORA_FINE`, `TIPO`, `CAUSALE`, `TURNO`, `LAVORO`, `SETUP`, `QTA_CONTATA`, `QTA_SCARTATA`. Probabilmente è la base per Disponibilità e Qualità.
+- `EVENTI`: eventi macchina con `EVENTO`, `CAUSALE`, `TEMPO`.
+- `TURNI`: fasce orarie `INIxx`/`FINxx`.
+- `VALORI_TABELLE`: probabili decodifiche (causali, stati).
+- `STATI_MACCHINE` e `STO_*` sono vuote.
+
+### CCP
+Le tabelle qualità di NetPro sono **tutte vuote**: `FVALLIMITS` (limiti), `FTESTS`, `FSPC*`, `FCHARTXR_DATA`, `FALARMS`.
+Quindi oggi in NetPro **non ci sono limiti CCP, esiti, deviazioni né azioni correttive**. Al massimo ci sono i valori
+di processo grezzi (per esempio temperature del forno) in `FPROCESSDATA`. Limiti, deviazioni e azioni correttive
+andranno gestiti nel DB applicativo. `[DA VERIFICARE con la Qualità]`
