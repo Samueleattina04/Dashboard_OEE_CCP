@@ -55,6 +55,11 @@ Le regole sono valutate in ordine; vale la prima che corrisponde.
 | `ReadyError`, `SelectionError`, `CleaningError`, `RecipeError`, `ConnectError`, `ConfigureError`, `MachineDataError`, `Emergency` | `ALLARME` |
 | `Configure`, `Connect`, `MachineData`, `Recipe`, `Setup`, `FwUpgrade` | `AVVIO` |
 | `Offline` | `FERMO` |
+| `End3` | `[DA VERIFICARE]`: **non presente nel manuale**, ma frequente (4.188 campioni in 12 mesi, circa 1.047 h) |
+| `CleaningMachine` | `[DA VERIFICARE]`: non nel manuale. Proposta `FERMO` (pulizia macchina, non durante la selezione) |
+| `Testing` | `AVVIO` (proposta; non nel manuale) |
+| `ReadyCheck` | `FERMO` (proposta; non nel manuale) |
+| `OfflineOrDisabled` | `FERMO` (variante di `Offline`) |
 | vuoto o valore non previsto | `SENZA_DATO`, segnalato come "valore non mappato" |
 
 > FDI usa `Active` per lo stato (anomalia A10). La dashboard **non** usa quel calcolo.
@@ -371,3 +376,36 @@ Volume stimato: ~35.000 campioni l'anno per macchina, quindi le viste sui 12 mes
 - **MTTR** (tempo medio di riparazione) = ore totali di guasto / numero di guasti. Indica quanto dura in media un guasto.
 
 Servono a valutare affidabilità e manutenzione. Con campioni ogni 15 minuti i guasti brevi non si vedono, quindi i valori sarebbero fuorvianti: si attivano quando ci saranno dati più fini o le registrazioni manuali.
+
+## 13. Esito del giro 4 (05/11/2026, ultimi 12 mesi)
+
+### Forno: distribuzione di `FVALUE02` (temperatura di tostatura)
+Campioni per fascia di 10 °C:
+
+| °C | 0 | 10 | 20 | 30 | 40 | 50 | 60 | 70 | 80 | 90 | 100 | 110 | 120 | 130 | 140 | 150 | 160 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| campioni | 188 | 6.165 | 7.066 | 3.807 | 2.540 | 1.779 | 1.006 | 734 | 737 | 1.584 | 1.393 | 1.714 | 1.441 | 1.025 | 2.461 | 1.342 | 2 |
+
+- La distribuzione ha **due gruppi**: forno freddo (10–40 °C) e forno in lavoro (90–150 °C), con un minimo a 70–80 °C dovuto ai transitori di riscaldamento e raffreddamento.
+- Molte giornate lavorano con un massimo a 110–120 °C, cioè ricette a temperatura più bassa (es. asciugatura, mandorle).
+- Le domeniche risultano a 0 ore con qualunque soglia. Questo conferma che il segnale distingue bene forno acceso e spento.
+- Copertura: 56 campioni vuoti in 12 mesi (luglio 2026), nessun valore non numerico.
+
+| Soglia S_marcia | Giorni con funzionamento | Media ore/giorno (giorni attivi) | Effetto |
+|---|---|---|---|
+| 80 °C | 276 | 10,6 h | include buona parte di riscaldamento e raffreddamento |
+| **100 °C** (proposta) | 274 | 8,6 h | include le ricette a 110–120 °C ed esclude la maggior parte dei transitori |
+| 130 °C | 197 | 6,1 h | perde le giornate con ricette a bassa temperatura: sottostima |
+
+### FX10130: valori di `CurrentSmState` e copertura
+| Stato | Campioni | Ore circa |
+|---|---|---|
+| Ready | 4.923 | 1.231 |
+| **End3** (non nel manuale) | 4.188 | 1.047 |
+| Selecting | 4.016 | 1.004 |
+| Cleaning | 243 | 61 |
+| (vuoto) | 59 | 15 |
+| CleaningMachine | 51 | 13 |
+| ReadyError 21, Testing 9, SelectionError 5, ReadyCheck 3, CleaningError 2, Recipe 2, OfflineOrDisabled 1 | | |
+
+- **Copertura molto discontinua**: nessun record tra **febbraio e maggio 2026**, mesi parziali da giugno a ottobre 2026 (8–28 giorni con dati). Il connettore OPC di FX10130 perde la comunicazione per periodi lunghi `[DA VERIFICARE con Qualitas]`. La dashboard mostrerà questi periodi come `SENZA_DATO`.
