@@ -1,6 +1,6 @@
 # Fase 1 — Piano di scoperta del database MES
 
-Stato: **in corso** — giro 1 eseguito il 05/11/2026; in attesa del giro 2 (`discovery/sql_giro2`).
+Stato: **in corso** — giri 1 e 2 eseguiti il 05/11/2026; in attesa dei file di configurazione FDI.
 
 ## Contesto acquisito
 
@@ -95,3 +95,51 @@ Le tabelle qualità di NetPro sono **tutte vuote**: `FVALLIMITS` (limiti), `FTES
 Quindi oggi in NetPro **non ci sono limiti CCP, esiti, deviazioni né azioni correttive**. Al massimo ci sono i valori
 di processo grezzi (per esempio temperature del forno) in `FPROCESSDATA`. Limiti, deviazioni e azioni correttive
 andranno gestiti nel DB applicativo. `[DA VERIFICARE con la Qualità]`
+
+## Esito del giro 2 (05/11/2026)
+
+### Altro database sull'istanza
+Oltre a `NETPRO` esiste un database **`MACCHINE`**, creato il 27/09/2022 insieme a FDI.
+Potrebbe contenere dati macchina a frequenza più alta. `lettore` probabilmente non ha accesso. `[DA VERIFICARE]`
+
+### Corrispondenza macchine ↔ connettori FDI
+Ricavata da `MACCHINE.DESCRIZIONE`. Da confermare con i `Config.json`.
+
+| Macchina | Descrizione MES | Centro | Connettore FDI probabile |
+|---|---|---|---|
+| BROVRAF | Raffinatrice Brovind linea pasta | MISCRAFF_01 | `DeviceAppSiemens_Brovind_Pasta` |
+| FORNOKING500 | Brovind King500 Forno | MISCRAFF_01 | `DeviceAppSiemens_Brovind_Forno` |
+| FX10130 | Selezionatrice Fenix 3UVision | SELEZIONATRICI | `DeviceAppOPC_3UVISION` |
+| HYPERSORTL4 | Cimbria Hypersort L4 | SELEZIONATRICI | `DeviceAppOPC_Cimbria` |
+
+### FPROCESSDATA: un solo canale, una riga ogni 15 minuti
+| Macchina | Canale | Dal | Righe ultimi 7 gg | Colonne valorizzate |
+|---|---|---|---|---|
+| BROVRAF | HIST | 03/10/2023 | 672 | `FVALUE01–11`, tutte a `0` |
+| FORNOKING500 | HIST | 03/10/2023 | 672 | `FVALUE01–06`: valori tipo `42,2` / `48,9` / `21,8`… (sembrano **temperature**) |
+| FX10130 | HIST | 14/02/2024 | 52 | `FVALUE01` = programma (es. "SEPARAZIONE USA INT DA ROTT…"), `FVALUE02` = stato (`Ready`/`Selecting`), `FVALUE03` = pressione aria ("3,97 bar"), `FVALUE04` = livelli (`EMPTY`/`LOW`/`FULL`), `FNVALUE01–12` = contatori/portate |
+| HYPERSORTL4 | HIST | 03/10/2023 | 671 | nessuna (macchina probabilmente ferma) |
+
+Conseguenze:
+- I valori in `FVALUEnn` sono **testo con la virgola decimale**. Vanno convertiti senza arrotondare.
+- Una riga ogni 15 minuti è una **fotografia periodica**, non un registro di eventi. Due limiti:
+  - la durata degli stati, e quindi la Disponibilità, si può stimare solo con risoluzione di 15 minuti;
+  - per i CCP di tostatura, un campione ogni 15 minuti potrebbe non bastare come evidenza di controllo continuo. `[DA VERIFICARE con la Qualità]`
+
+### SITUAZIONI / EVENTI: consuntivazione quasi assente
+- `SITUAZIONI` (dal 2022) ha tipi `IDLE`, `WSET`, `WORK`, `SET`, `TIME`, **senza nessuna causale di fermo valorizzata**.
+- Per BROVRAF, FORNOKING500 e HYPERSORTL4 ci sono quasi solo righe `IDLE`. Le poche `WORK`/`WSET` risalgono al 2022–2024 e hanno quantità a 0.
+- Solo **FX10130** ha righe `WORK`/`TIME` con quantità e scarti: 690 righe, quasi tutte del 2025.
+- `EVENTI` contiene solo aperture e chiusure di sessione (`OPN`/`CLS`/`UPD`) generate dal Web Service.
+- In `VALORI_TABELLE` **non esistono causali di fermo**: ci sono solo `MATCAUSALI` = scarti "pezzo non conforme" / "pezzo distrutto".
+- `TURNI` ha configurato solo il "Turno mattutino" 7–16 (13 il sabato). Pomeridiano e serale sono vuoti.
+
+**Conclusione provvisoria**: con i dati attuali l'OEE **non** si può calcolare dalle tabelle di consuntivazione di NetPro, tranne forse per FX10130.
+Le strade possibili, da valutare in Fase 2:
+- ricavare stati e contatori dai segnali in `FPROCESSDATA`, se il `Config.json` conferma quali colonne li contengono;
+- usare il DB `MACCHINE`, se contiene dati più fini;
+- far configurare al fornitore la consuntivazione su NetPro (stati, causali, ordini).
+
+## Stack (deciso il 05/11/2026)
+Server applicativo `192.168.3.206`, Windows Server 2025. Stack **PHP + Laravel + MySQL**, frontend in CSS/JS.
+Sostituisce Python/FastAPI e React proposti nel prompt originale.
