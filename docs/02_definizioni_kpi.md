@@ -39,6 +39,8 @@ Legenda: `[DA VERIFICARE]` = assunzione da confermare; **(Admin)** = parametro g
 | `FERMO` | accesa o pronta ma non produce | no |
 | `ALLARME` | stato di errore o emergenza dichiarato dalla macchina | no (perdita "guasto") |
 | `AVVIO` | configurazione, connessione, caricamento ricetta o dati, setup | no (perdita "setup/avviamento") |
+| `RISCALDAMENTO` / `RAFFREDDAMENTO` | transitori termici del forno | no, conteggiati a parte |
+| `NON_CLASSIFICATO` | dato presente ma di significato ignoto (es. FX10130 `End3`) | escluso dal calcolo come `SENZA_DATO`, ma mostrato a parte |
 | `SENZA_DATO` | nessun campione valido | escluso dal calcolo |
 
 ### 2.2 Regole di stato per macchina (Admin, valori iniziali proposti)
@@ -55,10 +57,10 @@ Le regole sono valutate in ordine; vale la prima che corrisponde.
 | `ReadyError`, `SelectionError`, `CleaningError`, `RecipeError`, `ConnectError`, `ConfigureError`, `MachineDataError`, `Emergency` | `ALLARME` |
 | `Configure`, `Connect`, `MachineData`, `Recipe`, `Setup`, `FwUpgrade` | `AVVIO` |
 | `Offline` | `FERMO` |
-| `End3` | `[DA VERIFICARE]`: **non presente nel manuale**, ma frequente (4.188 campioni in 12 mesi, circa 1.047 h) |
-| `CleaningMachine` | `[DA VERIFICARE]`: non nel manuale. Proposta `FERMO` (pulizia macchina, non durante la selezione) |
-| `Testing` | `AVVIO` (proposta; non nel manuale) |
-| `ReadyCheck` | `FERMO` (proposta; non nel manuale) |
+| `End3` | `NON_CLASSIFICATO` (decisione 05/11/2026; il significato verrà fornito) |
+| `CleaningMachine` | `FERMO` (confermato) |
+| `Testing` | `AVVIO` (confermato) |
+| `ReadyCheck` | `FERMO` (confermato) |
 | `OfflineOrDisabled` | `FERMO` (variante di `Offline`) |
 | vuoto o valore non previsto | `SENZA_DATO`, segnalato come "valore non mappato" |
 
@@ -66,16 +68,20 @@ Le regole sono valutate in ordine; vale la prima che corrisponde.
 
 **FORNOKING500 — Forno King 500**
 
-Il forno **non espone un segnale di marcia** (anomalia A9: `FVALUE07` è lo stato ordine, sempre 0). Proposta: stato dedotto dalla **temperatura di tostatura** `FVALUE02` (`Temp_Toasting`):
+Il forno **non espone un segnale di marcia** (anomalia A9: `FVALUE07` è lo stato ordine, sempre 0). Lo stato si deduce dalla **temperatura di tostatura** `FVALUE02` (`Temp_Toasting`), con due soglie **(Admin)** decise il 05/11/2026:
 
 | Condizione | Stato |
 |---|---|
-| `FVALUE02` ≥ **S_marcia** | `MARCIA` ("forno in temperatura di lavoro") |
-| `FVALUE02` < **S_marcia** | `FERMO` |
+| `FVALUE02` ≥ **S_marcia = 100 °C** | `MARCIA` ("forno in temperatura di lavoro") |
+| **S_transitorio = 70 °C** ≤ `FVALUE02` < 100 °C, temperatura **in salita** rispetto al campione precedente | `RISCALDAMENTO` |
+| 70 °C ≤ `FVALUE02` < 100 °C, temperatura **in discesa** | `RAFFREDDAMENTO` |
+| 70 °C ≤ `FVALUE02` < 100 °C, temperatura invariata o primo campione | stesso transitorio del campione precedente; se manca, `RISCALDAMENTO` se il campione precedente era sotto 70 °C, `RAFFREDDAMENTO` se era sopra 100 °C |
+| `FVALUE02` < 70 °C | `FERMO` |
 | `FVALUE02` vuoto o non numerico | `SENZA_DATO` |
 
-- **S_marcia (Admin)**: nessun valore inventato. Si sceglie dopo l'analisi della distribuzione storica delle temperature (query Q4, §7). Dai dati visti: le giornate di produzione del 2022 lavoravano a setpoint 140–150 °C, mentre a forno spento la temperatura scende a 15–50 °C. `[DA VERIFICARE con la produzione]`
-- **Limite noto**: un forno "in temperatura" può essere in preriscaldo o a vuoto. Il KPI va quindi letto come **ore con forno in temperatura di lavoro**. Si potrà affinare più avanti, per esempio con `BulkHead_Opening` se Qualitas lo storicizza.
+- **Riscaldamento e raffreddamento** non contano come marcia, ma sono conteggiati e mostrati **separatamente**: ore al giorno, numero di avviamenti, durata media del riscaldamento.
+- Possibile limite: la fascia 90–100 °C ha molti campioni (1.584 in 12 mesi). Potrebbe esserci una ricetta che lavora sotto i 100 °C, per esempio un'asciugatura, e verrebbe contata come transitorio. `[DA VERIFICARE guardando qualche giornata]`
+- **Limite noto**: un forno "in temperatura" può essere in preriscaldo o a vuoto. Il KPI va quindi letto come **ore con forno in temperatura di lavoro**.
 
 **HYPERSORTL4**: **fuori perimetro** (decisione del 05/11/2026).
 
@@ -409,3 +415,12 @@ Campioni per fascia di 10 °C:
 | ReadyError 21, Testing 9, SelectionError 5, ReadyCheck 3, CleaningError 2, Recipe 2, OfflineOrDisabled 1 | | |
 
 - **Copertura molto discontinua**: nessun record tra **febbraio e maggio 2026**, mesi parziali da giugno a ottobre 2026 (8–28 giorni con dati). Il connettore OPC di FX10130 perde la comunicazione per periodi lunghi `[DA VERIFICARE con Qualitas]`. La dashboard mostrerà questi periodi come `SENZA_DATO`.
+
+## 14. Decisioni del 05/11/2026 (dopo il giro 4)
+
+| Tema | Decisione |
+|---|---|
+| Forno | `MARCIA` ≥ 100 °C; **transitori 70–100 °C conteggiati a parte** (riscaldamento / raffreddamento); `FERMO` < 70 °C |
+| FX10130 `End3` | `NON_CLASSIFICATO` finché non arriva il significato |
+| FX10130 altri stati | proposte confermate |
+| Copertura discontinua FX10130 | da verificare con Qualitas |
