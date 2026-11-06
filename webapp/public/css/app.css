@@ -127,3 +127,10 @@ form.in-linea { display: inline; }
 th[colspan] { text-align: center; border-bottom-color: var(--testo-3); }
 .testata { gap: .5rem 1rem; }
 .testata nav a { padding: .35rem .5rem; font-size: .92rem; }
+/* Qualità del dato: scala sequenziale blu (palette di riferimento, step 150→600) */
+.cop-0 { background: repeating-linear-gradient(135deg, var(--s-senza-dato) 0 3px, var(--superficie) 3px 6px); outline: 1px solid var(--bordo); outline-offset: -1px; }
+.cop-1 { background: #b7d3f6; } .cop-2 { background: #86b6ef; } .cop-3 { background: #5598e7; }
+.cop-4 { background: #256abf; } .cop-5 { background: #184f95; }
+.calendario-copertura { display: flex; gap: 2px; }
+.calendario-copertura div { flex: 1 1 0; min-width: 2px; height: 24px; border-radius: 3px; }
+.scala-giorni { display: flex; justify-content: space-between; margin-top: 2px; }
