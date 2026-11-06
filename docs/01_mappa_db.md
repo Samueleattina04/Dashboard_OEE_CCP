@@ -386,3 +386,14 @@ In ogni caso **servono dati che il MES non ha**, da gestire in configurazione da
 | Turni e capacità | Da gestire nella dashboard |
 | CCP | Da approfondire dopo i primi dati di OEE |
 | Anomalie A1–A5 | Da valutare più avanti |
+
+---
+
+## 12. Altre macchine: ULMA e PELAB in SITUAZIONI (giro 6, 06/11/2026)
+
+`NETPRO.dbo.SITUAZIONI`: 4.013 righe ULMA (dal 18/07/2023), 3.023 righe PELAB (dal 14/04/2023). **Non utilizzabili per l'OEE**:
+
+- **Fino a gennaio 2025**: una riga `IDLE` al giorno con `LAVORO` = durata del turno mattutino (7–16, sabato 7–13, circa 219–231 h/mese). È il **calendario NetPro**, non un'attività della macchina. Poche righe `WORK` di prova (task `TSTPELAB110`, `TSTPELAB210`, quantità 1 / 1.500 / 2.125).
+- **Da 21/01/2025 (PELAB) e 27/01/2025 (ULMA)**: è aperto in permanenza un task di prova (PELAB `00005910` "Articolo per PE Labellers", ULMA `00006110` "Sgusciato 10 Kg"). NetPro registra ogni giorno 3 righe (00–07, 07–16, 16–24) **24 h su 24, festivi compresi** (744 h/mese), come `WORK` per PELAB e come `WSET` (attrezzaggio) per ULMA, con **quantità sempre a 0**.
+
+Conclusione: per HEUFT, ULMA e PELAB l'unica fonte reale sono i segnali in tempo reale di FDI (`FIOLINES`, solo ultimo valore). Per avere uno storico serve che **Qualitas aggiunga la regola `DATINF … CHANNEL=HIST`** in FDI (come per forno e selezionatrice), oppure che la dashboard campioni `FIOLINES`.
