@@ -36,6 +36,13 @@ class ImportatoreCampioni
         $convertitore = new ConvertitoreTimestamp($fuso, ($da === null && $ultimoUtc) ? new DateTimeImmutable($ultimoUtc, new DateTimeZone('UTC')) : null);
 
         $cursore = $da ?? $sync->ultimo_ftimestamp;
+        $puntoRipresa = $cursore;
+        if ($da === null && $cursore !== null) {
+            // Rilettura delle ultime 2 ore: alla fine dell'ora legale l'ora 02:00–02:59 si ripete con lo stesso
+            // FTIMESTAMP (e FROW diverso). Senza sovrapposizione quei record verrebbero saltati.
+            // I record già presenti vengono scartati dalla chiave univoca di origine.
+            $cursore = (new DateTimeImmutable(substr($cursore, 0, 19)))->modify('-2 hours')->format('Y-m-d H:i:s.v');
+        }
         $totale = 0;
         $minUtc = $maxUtc = null;
 
@@ -71,7 +78,7 @@ class ImportatoreCampioni
                 $totale += count($righe);
             } while (count($righe) === $limite);
 
-            if ($cursore !== null && ($sync->ultimo_ftimestamp === null || $cursore > $sync->ultimo_ftimestamp)) {
+            if ($cursore !== null && ($puntoRipresa === null || $cursore > $puntoRipresa)) {
                 $sync->ultimo_ftimestamp = $cursore;
             }
             $sync->esito = 'ok';

@@ -21,8 +21,8 @@ Già presenti 23 test (calcoli con casi fatti a mano, permessi per ruolo, inviti
 
 - [ ] 🤖 Aggiungere i test che il prompt richiede e non sono ancora coperti:
   - [ ] limiti CCP (valore pari al limite, sopra, sotto, misura mancante), insieme alle viste CCP;
-  - [ ] export: formati italiani (`;`, virgola decimale, `gg/mm/aaaa`) verificati sul contenuto;
-  - [ ] un giorno con cambio dell'ora legale (25 ore) completo, dall'importazione all'aggregato.
+  - [x] export: formati italiani (`;`, virgola decimale, `gg/mm/aaaa`) verificati sul contenuto;
+  - [x] un giorno con cambio dell'ora legale (25 ore) completo, dall'importazione all'aggregato (ha trovato e fatto correggere un difetto nell'importazione incrementale dell'ora ripetuta).
 - [ ] 🤖 Eseguire tutti i test e allegare l'esito a `docs/04_riconciliazione.md`.
 - [ ] 👤 Eseguire gli stessi test **sul server** (con `composer install` *senza* `--no-dev`, solo per la prova) e confermare che passano anche lì.
 
@@ -67,7 +67,7 @@ il riferimento va scelto tra quelli disponibili.
 ## 5. Consegna
 
 - [ ] 🤖 `README.md` completo: installazione, configurazione `.env`, avvio, aggiornamento con `git pull`, backup e ripristino.
-- [ ] 🤖 **Manuale utente** breve: 1 pagina per la **Qualità**, 1 pagina per la **Direzione**.
+- [ ] 🤖 **Manuale utente** breve: 1 pagina per la **Qualità**, 1 pagina per la **Direzione** — bozza in `docs/05_manuale_utente.md`, da rifinire dopo le prove.
 - [ ] 🤖 Elenco finale dei **`[DA VERIFICARE]`** rimasti aperti.
 - [ ] 🤝 Unire il ramo di lavoro al ramo principale e far puntare il server lì.
 - [ ] 👤 Presentazione ai primi utenti (Qualità e Direzione) e raccolta delle osservazioni.
@@ -78,6 +78,6 @@ il riferimento va scelto tra quelli disponibili.
 
 Da completare (o rinviare esplicitamente) prima della verifica finale:
 
-- [ ] 🤖 Vista **Storico e confronti** (periodo contro periodo, macchina contro macchina).
+- [x] 🤖 Vista **Storico e confronti** (periodo contro periodo, macchina contro macchina), con export.
 - [ ] 🤝 **CCP**: definizione con la Qualità, poi viste, carte di controllo, registro deviazioni, misure mancanti e **report PDF** per audit.
 - [ ] 🤖 **Causali di fermo e 6 big losses**, quando ci saranno le registrazioni manuali (oggi parcheggiate).

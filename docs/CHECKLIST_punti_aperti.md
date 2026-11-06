@@ -63,12 +63,11 @@ Legenda: 🔴 urgente / blocca qualcosa · 🟠 importante · 🟢 quando possib
 
 ## G. Sviluppi ancora da fare (a cura mia)
 
-- [ ] 🟠 Vista **Storico e confronti** (periodo contro periodo, macchina contro macchina).
 - [ ] 🟠 **Viste CCP**: carta di controllo con limiti, registro deviazioni e azioni correttive, misure mancanti.
 - [ ] 🟠 **Report PDF CCP** per audit (intestazione ASE, filtri, data di estrazione, utente).
 - [ ] 🟢 **Causali di fermo e 6 big losses**: la struttura è pronta, la vista arriverà con le registrazioni manuali.
 - [ ] 🟢 **Registrazioni manuali degli operatori** (timestamp disponibili): esplorazione parcheggiata.
-- [ ] 🟢 Manuale utente breve (1 pagina Qualità, 1 pagina Direzione).
+- [ ] 🟢 Manuale utente: bozza in `docs/05_manuale_utente.md`, da rifinire dopo le prove.
 
 ## H. Messa in produzione (dopo la prova)
 

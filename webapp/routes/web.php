@@ -7,6 +7,7 @@ use App\Http\Controllers\ExportController;
 use App\Http\Controllers\MacchinaController;
 use App\Http\Controllers\PanoramicaController;
 use App\Http\Controllers\StatoMacchineController;
+use App\Http\Controllers\StoricoController;
 use Illuminate\Support\Facades\Route;
 
 // Accesso (pubblico)
@@ -27,7 +28,9 @@ Route::middleware(['auth', 'ruolo'])->group(function () {
     Route::get('/', PanoramicaController::class)->name('panoramica');
     Route::get('/stato', StatoMacchineController::class)->name('stato');
     Route::get('/macchine/{codice}', MacchinaController::class)->name('macchina');
+    Route::get('/storico', StoricoController::class)->name('storico');
     Route::get('/export/giornaliero.{formato}', [ExportController::class, 'giornaliero'])->name('export.giornaliero');
+    Route::get('/export/confronto.{formato}', [ExportController::class, 'confronto'])->name('export.confronto');
 });
 
 // Configurazione: Admin e SuperAdmin

@@ -18,6 +18,7 @@
     <nav>
         <a href="{{ route('panoramica') }}" @class(['attivo' => request()->routeIs('panoramica')])>Panoramica</a>
         <a href="{{ route('stato') }}" @class(['attivo' => request()->routeIs('stato')])>Stato macchine</a>
+        <a href="{{ route('storico') }}" @class(['attivo' => request()->routeIs('storico')])>Storico e confronti</a>
         @if (auth()->user()->puoConfigurare())
             <a href="{{ route('admin.configurazione') }}" @class(['attivo' => request()->routeIs('admin.configurazione')])>Configurazione</a>
             <a href="{{ route('admin.audit') }}" @class(['attivo' => request()->routeIs('admin.audit')])>Storico modifiche</a>
