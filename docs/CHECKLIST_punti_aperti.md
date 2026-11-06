@@ -75,7 +75,7 @@ Legenda: 🔴 urgente / blocca qualcosa · 🟠 importante · 🟢 quando possib
 
 - [ ] 🟠 **IIS** con sito su `C:\ASE\Dashboard_OEE_CCP\webapp\public` e **HTTPS** con certificato della CA interna; poi chiudere la porta 8010.
 - [ ] 🟠 **Utilità di pianificazione**: `php artisan schedule:run` ogni minuto (sostituisce la finestra `schedule:work`).
-- [ ] 🟠 **Posta SMTP** per gli inviti: quale casella aziendale usare?
+- [ ] 🟠 **Record SPF di `pisti.it`**: aggiungere l'IP pubblico del server (invio diretto a `pisti-it.mail.protection.outlook.com:25` già funzionante, ma le email arrivano con l'avviso "mittente non verificato"). In alternativa, un connettore in ingresso in Exchange Online.
 - [ ] 🟠 **Backup** giornaliero di `dashboard_oee` (mysqldump) e dei log `storage\logs\mes-*.log`.
 - [ ] 🟢 `APP_ENV=production` e cache di config, route e viste.
 - [ ] 🟢 Unire il ramo di lavoro al ramo principale e far puntare il server lì.
