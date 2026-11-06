@@ -42,6 +42,23 @@ class RepositoryMes implements SorgenteCampioni
         return $this->select($sql, $parametri);
     }
 
+    /** Permessi effettivi dell'utente MES (evidenza di sola lettura) e ultimo campione per macchina. */
+    public function verifica(array $macchine): array
+    {
+        $permessi = $this->select("SELECT permission_name COLLATE DATABASE_DEFAULT AS valore FROM fn_my_permissions(NULL, 'DATABASE')"
+            .' UNION ALL SELECT r.name COLLATE DATABASE_DEFAULT FROM sys.database_role_members AS m'
+            .' JOIN sys.database_principals AS r ON r.principal_id = m.role_principal_id'
+            .' WHERE m.member_principal_id = DATABASE_PRINCIPAL_ID()', []);
+        $ultimi = [];
+        foreach ($macchine as $codice) {
+            $r = $this->select('SELECT TOP (1) CONVERT(varchar(23), FTIMESTAMP, 121) AS FTIMESTAMP FROM dbo.FPROCESSDATA'
+                .' WHERE FOBJECT = ? AND FOBJTYPE = ? AND FCHANNEL = ? ORDER BY FTIMESTAMP DESC', [$codice, 'MAC', 'HIST']);
+            $ultimi[$codice] = $r[0]['FTIMESTAMP'] ?? null;
+        }
+
+        return ['permessi' => array_column($permessi, 'valore'), 'ultimi' => $ultimi];
+    }
+
     /** @return array<int, array<string, mixed>> */
     protected function select(string $sql, array $parametri): array
     {

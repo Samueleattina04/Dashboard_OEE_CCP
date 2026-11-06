@@ -1,0 +1,14 @@
+@extends('layout')
+@section('titolo', 'Accesso')
+@section('contenuto')
+<div class="pannello accesso">
+    <h1>Dashboard OEE e CCP</h1>
+    <p class="muto">Antichi Sapori dell'Etna · accesso riservato</p>
+    <form method="post" action="{{ url('/login') }}">
+        @csrf
+        <label>Email<input type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username"></label>
+        <label>Password<input type="password" name="password" required autocomplete="current-password"></label>
+        <button>Accedi</button>
+    </form>
+</div>
+@endsection

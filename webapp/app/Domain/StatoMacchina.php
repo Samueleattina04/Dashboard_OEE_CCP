@@ -16,6 +16,13 @@ enum StatoMacchina: string
     case NonClassificato = 'NON_CLASSIFICATO';
     case SenzaDato = 'SENZA_DATO';
 
+    /** Ordine di impilamento nei grafici e nelle legende (lo stesso ovunque). */
+    public static function ordineVisualizzazione(): array
+    {
+        return [self::Marcia, self::Riscaldamento, self::Raffreddamento, self::Avvio, self::Allarme,
+            self::Fermo, self::NonClassificato, self::SenzaDato];
+    }
+
     /** Stati esclusi da numeratore e denominatore dei KPI (dato assente o di significato ignoto). */
     public function esclusoDalCalcolo(): bool
     {

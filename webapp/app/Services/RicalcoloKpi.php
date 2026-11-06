@@ -39,6 +39,9 @@ class RicalcoloKpi
         $utc = new DateTimeZone('UTC');
         $inizio = (new DateTimeImmutable($giorno.' 00:00:00', $tzL))->setTimezone($utc);
         $fine = (new DateTimeImmutable($giorno.' 00:00:00', $tzL))->modify('+1 day')->setTimezone($utc);
+        // Per il giorno in corso si calcola solo fino ad adesso: il futuro non è "senza dato"
+        $adesso = new DateTimeImmutable('now', $utc);
+        $fineDati = $fine < $adesso ? $fine : $adesso;
 
         $regola = $macchina->regolaValidaIl($inizio);
         IntervalloStato::where('macchina_id', $macchina->id)
@@ -67,10 +70,13 @@ class RicalcoloKpi
 
         $costruttore = new CostruttoreIntervalli($regola->classificatore(), $regola->gMaxSecondi(),
             (int) config('dashboard.passo_campionamento_secondi', 900));
-        $intervalli = $costruttore->costruisci($dominio, $inizio, $fine);
+        if ($fineDati <= $inizio) {
+            return;
+        }
+        $intervalli = $costruttore->costruisci($dominio, $inizio, $fineDati);
 
         $this->salvaIntervalli($macchina, $regola->id, $intervalli);
-        $this->salvaOre($macchina, $intervalli, $inizio, $fine);
+        $this->salvaOre($macchina, $intervalli, $inizio, $fineDati);
 
         $riga = ['regola_id' => $regola->id, 'calcolato_il' => now(), 'motivi' => []];
         foreach (StatoMacchina::cases() as $s) {
@@ -84,6 +90,10 @@ class RicalcoloKpi
 
         // Tempo pianificato
         $finestre = $this->finestrePianificate($macchina, $giorno, $fuso);
+        if ($finestre !== null) {
+            // Giorno in corso: solo il tempo pianificato già trascorso
+            $finestre = Finestre::sottrai($finestre, [[$fineDati->getTimestamp(), $fine->modify('+1 day')->getTimestamp()]]);
+        }
         $motivi = [];
         if ($finestre === null) {
             $riga += ['secondi_pianificati' => null, 'secondi_marcia_in_turno' => null,
