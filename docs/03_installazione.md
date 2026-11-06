@@ -215,8 +215,14 @@ icacls "C:\ASE\Dashboard_OEE_CCP\webapp\.env" /grant "IIS AppPool\DashboardOEE:R
 
 **Posta**: invio diretto a `pisti-it.mail.protection.outlook.com:25` (solo destinatari del tenant Microsoft 365). Resta da aggiungere l'IP pubblico `217.58.204.66` al record SPF di `pisti.it`.
 
+**HTTPS** (07/11/2026): indirizzo **https://dashboard-oee.ase.intranet.nutkao.it**.
+- Voce DNS di tipo A `dashboard-oee` → `192.168.3.206`, nella zona `ase.intranet.nutkao.it`.
+- Certificato autofirmato valido 5 anni (`New-SelfSignedCertificate`), parte pubblica in `C:\ASE\dashboard-oee.cer`.
+- Collegamento IIS `https`, porta 443, con SNI (`-SslFlags 1`).
+- `.env`: `APP_URL=https://dashboard-oee.ase.intranet.nutkao.it` e `SESSION_SECURE_COOKIE=true`.
+- Per togliere l'avviso del browser, distribuire `dashboard-oee.cer` come "Autorità di certificazione radice attendibile" tramite GPO.
+
 **Da completare**:
-- HTTPS con nome interno, es. `dashboard-oee.ase.intranet.nutkao.it`, con il certificato già usato dalle altre app;
 - utente MySQL dedicato;
 - backup giornaliero (mysqldump) di `dashboard_oee` e dei log `storage\logs\mes-*.log`.
 
