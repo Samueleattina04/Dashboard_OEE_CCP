@@ -131,10 +131,9 @@ return [
             'prefix_indexes' => true,
             'encrypt' => env('MES_ENCRYPT', 'yes'),
             'trust_server_certificate' => env('MES_TRUST_SERVER_CERTIFICATE', 'true'),
-            'options' => [
-                // Timeout di login (secondi)
-                PDO::ATTR_TIMEOUT => 15,
-            ],
+            // Timeout di connessione in secondi (parola chiave LoginTimeout del driver pdo_sqlsrv).
+            // Nota: PDO::ATTR_TIMEOUT non è supportato da pdo_sqlsrv (errore IMSSP).
+            'login_timeout' => 15,
         ],
 
     ],
