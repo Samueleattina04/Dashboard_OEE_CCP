@@ -25,10 +25,19 @@ class QualitaDatoTest extends TestCase
                 'secondi_senza_dato' => $senzaDato, 'campioni_presenti' => $senzaDato === 86400 ? 0 : 96]);
         }
 
-        $this->actingAs(User::factory()->create(['ruolo' => 'qualita']))
-            ->get('/qualita-dato?periodo=personalizzato&da=2026-10-01&a=2026-10-07&macchina=FX10130')
-            ->assertOk()
-            ->assertSee('04/10/2026')->assertSee('06/10/2026')   // interruzione dal 04 al 06
-            ->assertSeeInOrder(['04/10/2026', '06/10/2026', '3']);
+        // Primo campione importato il 01/10: i giorni precedenti sono "non importati", non interruzioni
+        \DB::table('campioni_mes')->insert(['macchina_id' => $fx->id, 'fobject' => 'FX10130', 'fchannel' => 'HIST',
+            'ftimestamp_originale' => '2026-10-01 08:00:00.000', 'frow' => 0, 'ts_utc' => '2026-10-01 06:00:00.000',
+            'valori' => '{}', 'importato_il' => now()]);
+
+        $html = $this->actingAs(User::factory()->create(['ruolo' => 'qualita']))
+            ->get('/qualita-dato?periodo=personalizzato&da=2026-09-29&a=2026-10-07&macchina=FX10130')
+            ->assertOk()->getContent();
+
+        // Tabella delle interruzioni: una sola riga, dal 04/10 al 06/10, 3 giorni (29–30/09 esclusi: non importati)
+        $tabella = substr($html, strpos($html, '<h3>Interruzioni'));
+        $this->assertSame(1, substr_count($tabella, '<tr><td>'));
+        $this->assertMatchesRegularExpression('#<tr><td>04/10/2026</td><td>06/10/2026</td><td class="num">3</td>#', $tabella);
+        $this->assertStringContainsString('29/09/2026: periodo non importato', $html);
     }
 }

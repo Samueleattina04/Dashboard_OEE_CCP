@@ -6,8 +6,8 @@
     @if ($email)<p class="muto">{{ $email }}</p>@endif
     <form method="post" action="{{ route('reset.applica', $token) }}">
         @csrf
-        <label>Nuova password<input type="password" name="password" required autocomplete="new-password" minlength="12"></label>
-        <label>Ripeti la password<input type="password" name="password_confirmation" required autocomplete="new-password"></label>
+        @include('parziali.campo_password', ['nome' => 'password', 'etichetta' => 'Nuova password', 'autocomplete' => 'new-password', 'minlength' => 12])
+        @include('parziali.campo_password', ['nome' => 'password_confirmation', 'etichetta' => 'Ripeti la password', 'autocomplete' => 'new-password'])
         <p class="piccolo muto">Almeno 12 caratteri, con maiuscole, minuscole, numeri e simboli.</p>
         <button>Salva password</button>
     </form>

@@ -7,8 +7,8 @@
     <form method="post" action="{{ route('invito.accetta', $token) }}">
         @csrf
         <label>Nome e cognome<input name="name" value="{{ old('name', $invito->nome) }}" required maxlength="120"></label>
-        <label>Password<input type="password" name="password" required autocomplete="new-password" minlength="12"></label>
-        <label>Ripeti la password<input type="password" name="password_confirmation" required autocomplete="new-password"></label>
+        @include('parziali.campo_password', ['nome' => 'password', 'etichetta' => 'Password', 'autocomplete' => 'new-password', 'minlength' => 12])
+        @include('parziali.campo_password', ['nome' => 'password_confirmation', 'etichetta' => 'Ripeti la password', 'autocomplete' => 'new-password'])
         <p class="piccolo muto">Almeno 12 caratteri, con maiuscole, minuscole, numeri e simboli.</p>
         <button>Attiva</button>
     </form>

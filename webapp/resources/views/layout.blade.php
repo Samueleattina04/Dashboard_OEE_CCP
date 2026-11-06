@@ -59,6 +59,7 @@
     @yield('contenuto')
 </main>
 <script src="{{ asset('js/tema.js') }}"></script>
+<script src="{{ asset('js/password.js') }}"></script>
 @stack('script')
 </body>
 </html>

@@ -7,7 +7,7 @@
     <form method="post" action="{{ url('/login') }}">
         @csrf
         <label>Email<input type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username"></label>
-        <label>Password<input type="password" name="password" required autocomplete="current-password"></label>
+        @include('parziali.campo_password', ['nome' => 'password', 'etichetta' => 'Password', 'autocomplete' => 'current-password'])
         <button>Accedi</button>
     </form>
     <p class="piccolo" style="margin-top:1rem"><a href="{{ route('password.dimenticata') }}">Password dimenticata?</a></p>

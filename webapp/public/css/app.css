@@ -131,6 +131,19 @@ th[colspan] { text-align: center; border-bottom-color: var(--testo-3); }
 .cop-0 { background: repeating-linear-gradient(135deg, var(--s-senza-dato) 0 3px, var(--superficie) 3px 6px); outline: 1px solid var(--bordo); outline-offset: -1px; }
 .cop-1 { background: #b7d3f6; } .cop-2 { background: #86b6ef; } .cop-3 { background: #5598e7; }
 .cop-4 { background: #256abf; } .cop-5 { background: #184f95; }
-.calendario-copertura { display: flex; gap: 2px; }
-.calendario-copertura div { flex: 1 1 0; min-width: 2px; height: 24px; border-radius: 3px; }
-.scala-giorni { display: flex; justify-content: space-between; margin-top: 2px; }
+/* Calendario a settimane: una colonna per settimana, righe lun→dom */
+.calendario-scorri { overflow-x: auto; padding-bottom: 4px; }
+.calendario-copertura { display: grid; grid-template-columns: 28px repeat(var(--settimane), minmax(10px, 18px)); gap: 3px; }
+.cal-settimana, .cal-giorni-sett { display: grid; grid-template-rows: 16px repeat(7, 14px); gap: 3px; }
+.cal-giorni-sett span { font-size: .68rem; color: var(--testo-3); line-height: 14px; }
+.cal-mese { font-size: .7rem; color: var(--testo-2); white-space: nowrap; overflow: visible; line-height: 16px; }
+.calendario-copertura i { display: block; border-radius: 3px; }
+.calendario-copertura i.cal-vuoto { background: transparent; }
+.campo-password { position: relative; display: block; }
+.campo-password input { width: 100%; padding-right: 2.6rem; }
+.mostra-password { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: transparent; border: 0; color: var(--testo-2); padding: .25rem .4rem; line-height: 0; }
+.mostra-password:hover, .mostra-password:focus-visible { color: var(--testo); }
+.mostra-password .occhio-chiuso { display: none; }
+.mostra-password.visibile .occhio-chiuso { display: inline; }
+.mostra-password.visibile .occhio-aperto { display: none; }
+.cop-na { background: transparent; outline: 1px dashed var(--bordo); outline-offset: -1px; }

@@ -14,10 +14,11 @@
     };
 @endphp
 <h1>Qualità del dato</h1>
-<p class="muto">Copertura dei dati FDI giorno per giorno: quota del giorno con un campione valido. Un giorno a 0 % significa che il MES non ha registrato valori utilizzabili (record mancanti o campi vuoti), non che la macchina era ferma.</p>
+<p class="muto">Copertura dei dati FDI giorno per giorno: quota del giorno con un campione valido. Un giorno a 0 % significa che il MES non ha registrato valori utilizzabili (record mancanti o campi vuoti), non che la macchina era ferma. I giorni prima del primo campione importato sono indicati come "non importato" (per caricarli: <code>php artisan mes:storico</code>).</p>
 @include('parziali.filtri', ['macchine' => $tutteMacchine])
 
 <div class="legenda" aria-label="Legenda copertura">
+    <span><i class="campione-colore cop-na"></i>non importato</span>
     <span><i class="campione-colore cop-0"></i>nessun dato</span>
     <span><i class="campione-colore cop-1"></i>&lt; 25 %</span>
     <span><i class="campione-colore cop-2"></i>25–50 %</span>
@@ -34,12 +35,25 @@
         ultimo: <strong>{{ $s['ultimo'] ? $F::oraLocale($s['ultimo']) : '—' }}</strong> ·
         ultima importazione: {{ $s['sync']?->ultima_esecuzione ? $F::oraLocale($s['sync']->ultima_esecuzione) : '—' }} ({{ $s['sync']?->esito ?? '—' }})
     </p>
-    <div class="calendario-copertura" role="img" aria-label="Copertura giornaliera {{ $s['macchina']->codice }}">
-        @foreach ($s['giorni'] as $g)
-            <div class="{{ $classe($g['copertura']) }}" title="{{ $F::data($g['giorno']) }}: copertura {{ $F::percentuale($g['copertura']) }}, {{ $g['campioni'] }} campioni{{ $g['senza_dato'] !== null ? ', '.$F::ore($g['senza_dato']).' h senza dato' : '' }}"></div>
+    <div class="calendario-scorri">
+    <div class="calendario-copertura" style="--settimane: {{ count($s['settimane']) }}" role="img" aria-label="Copertura giornaliera {{ $s['macchina']->codice }}">
+        <div class="cal-giorni-sett"><span></span><span>lun</span><span></span><span>mer</span><span></span><span>ven</span><span></span><span>dom</span></div>
+        @foreach ($s['settimane'] as $sett)
+            <div class="cal-settimana">
+                <span class="cal-mese">{{ $sett['mese'] }}</span>
+                @foreach ($sett['giorni'] as $g)
+                    @if ($g && $g['non_importato'])
+                        <i class="cop-na" title="{{ $F::data($g['giorno']) }}: periodo non importato nella dashboard"></i>
+                    @elseif ($g)
+                        <i class="{{ $classe($g['copertura']) }}" title="{{ $F::data($g['giorno']) }}: copertura {{ $F::percentuale($g['copertura']) }}, {{ $g['campioni'] }} campioni{{ $g['senza_dato'] !== null ? ', '.$F::ore($g['senza_dato']).' h senza dato' : '' }}"></i>
+                    @else
+                        <i class="cal-vuoto"></i>
+                    @endif
+                @endforeach
+            </div>
         @endforeach
     </div>
-    <div class="scala-giorni piccolo muto"><span>{{ $F::data($filtri->da) }}</span><span>{{ $F::data($filtri->a) }}</span></div>
+    </div>
 
     <h3>Interruzioni (giorni consecutivi con copertura sotto il 50 %)</h3>
     @if (empty($s['interruzioni']))
