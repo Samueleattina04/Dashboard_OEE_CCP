@@ -424,3 +424,8 @@ Campioni per fascia di 10 °C:
 | FX10130 `End3` | `NON_CLASSIFICATO` finché non arriva il significato |
 | FX10130 altri stati | proposte confermate |
 | Copertura discontinua FX10130 | da verificare con Qualitas |
+
+## 15. Decisione del 06/11/2026 — BROVRAF
+
+Il giro 5 ha trovato uno storico valido di BROVRAF da gennaio 2024 a maggio 2025 (nel 2024 un campione al minuto); dal 13/05/2025 i valori sono tutti a 0 (PLC che non comunica).
+**Decisione: BROVRAF è fuori perimetro** e resta disattivata. Nel codice è presente la regola `soglia_colonne` (velocità motore > 0; temperature tutte a 0 = senza dato), riattivabile dal pannello Configurazione se servisse in futuro.

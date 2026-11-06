@@ -42,7 +42,6 @@ Legenda: 🔴 urgente / blocca qualcosa · 🟠 importante · 🟢 quando possib
 - [ ] 🟠 **A9 — Forno**: la variabile che FDI chiama `STATO_MACCHINA` è in realtà `STATO_ORDINE` del PLC; il forno non trasmette uno stato marcia/fermo.
 - [ ] 🟠 **A10 — FX10130**: FDI calcola lo stato da `Active` ("hardware riconosciuto") invece che da `CurrentSmState`.
 - [ ] 🟢 **HYPERSORTL4**: record vuoti dal 28/01/2026 (A1). Fuori perimetro, ma da segnalare.
-- [ ] 🟢 **BROVRAF**: valori a 0 dal 13/05/2025 (A3).
 - [ ] 🟢 **Frequenza di registrazione**: si può passare da 15 minuti a 1 minuto (almeno per il forno) e storicizzare `Time_Permanence`, `BulkHead_Opening` e ricetta? Attenzione al limite di 10 GB di SQL Server Express.
 - [ ] 🟢 A12 — Indirizzo PLC forno: il documento Brovind dice `11.11.11.31`, il config FDI `11.11.11.11`.
 

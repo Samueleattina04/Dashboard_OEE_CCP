@@ -32,7 +32,7 @@ Il prompt chiede il confronto con i **report nativi del MES**. NetPro però non 
 il riferimento va scelto tra quelli disponibili.
 
 - [ ] 👤 **Scegliere 3 giornate** di riferimento (es. una giornata piena, una con fermi, una con avvio/riscaldamento del forno).
-- [ ] 👤 **Macchine**: FORNOKING500 e FX10130 (HYPERSORTL4 fuori perimetro, BROVRAF sospesa: 2 macchine invece di 3).
+- [ ] 👤 **Macchine**: FORNOKING500 e FX10130 (HYPERSORTL4 e BROVRAF fuori perimetro: 2 macchine invece di 3).
 - [ ] 🤝 **Scegliere il riferimento** per ciascuna giornata (almeno uno):
   - [ ] grafici o storico del client **NetPro** per quelle macchine e quelle date;
   - [ ] **registro di produzione** o fogli dei capoturno (orari di accensione e spegnimento, kg lavorati);
