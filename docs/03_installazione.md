@@ -264,3 +264,53 @@ Restart-WebAppPool -Name "DashboardOEE"
 | `php artisan utenti:crea-superadmin <email>` | Crea o ripristina il SuperAdmin |
 
 Il registro di **tutte le query eseguite sul MES** è in `storage\logs\mes-AAAA-MM-GG.log` e serve come evidenza di sola lettura in Fase 4.
+
+---
+
+## Backup giornaliero
+
+Lo script `ops\backup_dashboard.ps1` salva ogni notte:
+- il database `dashboard_oee`, compresso in ZIP;
+- i log delle query sul MES;
+- il file `.env`.
+
+I backup finiscono in `C:\ASE\backup\dashboard_oee\<data>` e vengono conservati 30 giorni.
+
+**1. Cartella protetta** (solo amministratori e SYSTEM, perché contiene il `.env` con le password):
+```bash
+New-Item -ItemType Directory -Force C:\ASE\backup\dashboard_oee | Out-Null
+```
+```bash
+icacls C:\ASE\backup /inheritance:r /grant:r "Administrators:(OI)(CI)F" "SYSTEM:(OI)(CI)F"
+```
+
+**2. File con le credenziali MySQL**, letto da `mysqldump` (la password non sta nello script). Aprilo:
+```bash
+notepad C:\ASE\backup\mysql-backup.cnf
+```
+e scrivi, con l'utente della dashboard (non `root`):
+```ini
+[client]
+user=dashboard
+password=LA_PASSWORD
+host=127.0.0.1
+```
+
+**3. Prova manuale:**
+```bash
+powershell -ExecutionPolicy Bypass -File C:\ASE\Dashboard_OEE_CCP\ops\backup_dashboard.ps1
+```
+
+**4. Attività pianificata** ogni notte alle 01:40, con l'account di sistema:
+```bash
+$azione = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -ExecutionPolicy Bypass -File C:\ASE\Dashboard_OEE_CCP\ops\backup_dashboard.ps1"; $quando = New-ScheduledTaskTrigger -Daily -At 01:40; Register-ScheduledTask -TaskName "Dashboard OEE - backup" -Action $azione -Trigger $quando -User "SYSTEM" -RunLevel Highest -Force
+```
+
+**Ripristino** (es. su un database vuoto):
+```bash
+Expand-Archive C:\ASE\backup\dashboard_oee\<data>\dashboard_oee.sql.zip -DestinationPath C:\ASE\ripristino
+```
+```bash
+cmd /c "mysql --defaults-extra-file=C:\ASE\backup\mysql-backup.cnf < C:\ASE\ripristino\dashboard_oee.sql"
+```
+Il dump contiene `CREATE DATABASE` e sovrascrive le tabelle di `dashboard_oee`. Per una prova senza toccare quello in uso, ripristina su un altro server o rinomina il database nel file.

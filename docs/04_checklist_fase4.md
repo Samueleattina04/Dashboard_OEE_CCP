@@ -40,7 +40,7 @@ il riferimento va scelto tra quelli disponibili.
   - [ ] **conteggio manuale** dei campioni `FPROCESSDATA` del giorno (query di sola lettura che preparo io);
   - [ ] per FX10130, i contatori kg visti sul pannello della macchina a inizio e fine giornata.
 - [ ] 👤 **Scostamento ammesso**: decidere la soglia (es. ±1 punto percentuale sulla Disponibilità; ±15 min sulle ore in funzione, pari alla risoluzione dei dati).
-- [ ] 🤖 Preparare la query di riconciliazione (sola lettura) e il modello di confronto.
+- [x] 🤖 Preparare la riconciliazione: comando `php artisan kpi:riconcilia <MACCHINA> <AAAA-MM-GG> [--dettaglio]`, che rilegge FPROCESSDATA e ricalcola in modo indipendente.
 - [ ] 🤝 Confrontare, per ogni giornata e macchina:
   - [ ] ore in funzione, ferma, riscaldamento/raffreddamento (forno), senza dato;
   - [ ] numero di campioni presenti / attesi;
@@ -61,7 +61,7 @@ il riferimento va scelto tra quelli disponibili.
 - [ ] 👤 **HTTPS** su IIS con certificato della CA interna e nome DNS (es. `dashboard-oee.ase.local`); chiusura dell'HTTP.
 - [ ] 👤 **Utente MySQL dedicato** (non `root`) con permessi solo su `dashboard_oee`.
 - [ ] 👤 `.env` leggibile solo da amministratori, SYSTEM e pool IIS; accesso alle cartelle `config`/`xml` di FDI limitato.
-- [ ] 👤 **Backup** giornaliero di `dashboard_oee` e dei log MES, con una prova di ripristino.
+- [ ] 👤 **Backup** giornaliero: script pronto (`ops\backup_dashboard.ps1`, istruzioni in `docs/03_installazione.md`), da attivare e da provare con un ripristino.
 - [ ] 🤖 Verificare che log di accessi ed export registrino chi, cosa e quando; esempio allegato alla documentazione.
 - [ ] 🤖 Dipendenze con versioni bloccate (`composer.lock`) e controllo vulnerabilità (`composer audit`).
 

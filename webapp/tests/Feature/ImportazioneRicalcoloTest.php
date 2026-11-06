@@ -124,4 +124,20 @@ class ImportazioneRicalcoloTest extends TestCase
         $this->assertNull($agg->disponibilita);
         $this->assertSame('calendario_non_configurato', $agg->motivi['disponibilita']);
     }
+
+    public function test_riconciliazione_senza_scostamenti(): void
+    {
+        $this->seed(MacchineSeeder::class);
+        $righe = [];
+        foreach (['06:00' => '25,0', '06:15' => '80,0', '06:30' => '130,0', '06:45' => '140,0', '07:00' => '60,0'] as $ora => $t) {
+            $righe[] = ['FCHANNEL' => 'HIST', 'FTIMESTAMP' => "2026-11-04 {$ora}:00.000", 'FROW' => 0, 'FBATCH' => '0', 'FVALUE02' => $t];
+        }
+        $this->app->instance(SorgenteCampioni::class, new SorgenteFinta(['FORNOKING500' => $righe]));
+        $this->artisan('mes:importa', ['--macchina' => 'FORNOKING500'])->assertExitCode(0);
+
+        $this->artisan('kpi:riconcilia', ['macchina' => 'FORNOKING500', 'giorno' => '2026-11-04', '--dettaglio' => true])
+            ->expectsOutputToContain('Campioni MES nel giorno: 5 · nella dashboard: 5')
+            ->expectsOutputToContain('Nessuno scostamento.')
+            ->assertExitCode(0);
+    }
 }
