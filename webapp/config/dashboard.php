@@ -16,6 +16,12 @@ return [
     // Timeout delle query MES (secondi).
     'mes_timeout_query' => 30,
 
+    // NetPro live: letture di MACCHINE e FIOLINES ogni 2 minuti, conservate per questi minuti.
+    'netpro_live_minuti' => (int) env('NETPRO_LIVE_MINUTI', 10),
+
+    // Un segnale non letto dal PLC da più di questi minuti è segnalato come "fermo".
+    'netpro_segnale_fermo_minuti' => 30,
+
     // Giorni ricalcolati dal job notturno.
     'giorni_ricalcolo_notturno' => 7,
 ];

@@ -147,3 +147,8 @@ th[colspan] { text-align: center; border-bottom-color: var(--testo-3); }
 .mostra-password.visibile .occhio-chiuso { display: inline; }
 .mostra-password.visibile .occhio-aperto { display: none; }
 .cop-na { background: transparent; outline: 1px dashed var(--bordo); outline-offset: -1px; }
+.etichetta-stato { font-size: .82rem; font-weight: 600; }
+.etichetta-stato.ok { color: var(--ok); }
+.etichetta-stato.fermo { color: var(--avviso-bordo); }
+.avviso-testo { color: var(--avviso-bordo); font-weight: 600; }
+.valore-storico { display: inline-block; margin: 0 .6rem .15rem 0; white-space: nowrap; }

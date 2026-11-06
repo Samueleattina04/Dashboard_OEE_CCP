@@ -11,7 +11,7 @@ use InvalidArgumentException;
  * Query su indice cluster (FOBJECT, FOBJTYPE, FCHANNEL, FTIMESTAMP), colonne esplicite, parametri legati.
  * Ogni query eseguita è registrata nel canale di log "mes" (evidenza per la Fase 4).
  */
-class RepositoryMes implements SorgenteCampioni
+class RepositoryMes implements SorgenteCampioni, SorgenteNetProLive
 {
     public function campioniDopo(string $macchina, array $colonne, ?string $dopoFtimestamp, ?string $finoA, int $limite): array
     {
@@ -40,6 +40,30 @@ class RepositoryMes implements SorgenteCampioni
         $sql .= ' ORDER BY FTIMESTAMP, FROW';
 
         return $this->select($sql, $parametri);
+    }
+
+    /** Colonne di MACCHINE lette da "NetPro live" (stato e contatori; esclusi nomi di persone come RESPONSABILE). */
+    public const COLONNE_STATO_MACCHINE = [
+        'STATO_FISICO', 'ORA_ST_FISICO', 'STATO_LOGICO', 'ORA_ST_LOGICO', 'STATO_LINEE', 'TASK', 'TIPO_RILEVAZIONE',
+        'FCODE01', 'FCODE02', 'VALORE_CONTATORE', 'TOTALE_CONTATORE', 'CONTATORE_SCARTI', 'TOTALE_CONTATORE_SCARTI',
+        'FTOTQTY', 'FCOUNTSTATUS', 'PRODUZIONE', 'ORA_LETTURA', 'ORA_CONTATORE',
+    ];
+
+    /** Valore corrente di tutti i segnali (tabella piccola, ~60 righe, senza storico). */
+    public function segnaliCorrenti(): array
+    {
+        return $this->select('SELECT FIOLINE, FOBJTYPE, FOBJECT, FDESCR, FTYPE, FSTATUS, FPOSITION, FVALUE,'
+            .' CONVERT(varchar(23), FREADDATE, 121) AS FREADDATE FROM dbo.FIOLINES ORDER BY FOBJECT, FIOLINE', []);
+    }
+
+    /** Stato e contatori correnti di tutte le macchine (tabella piccola, ~26 righe). */
+    public function statoMacchine(): array
+    {
+        $colonne = array_map(fn ($c) => str_starts_with($c, 'ORA_') ? "CONVERT(varchar(23), {$c}, 121) AS {$c}" : $c,
+            self::COLONNE_STATO_MACCHINE);
+
+        return $this->select('SELECT MACCHINA, DESCRIZIONE, CENTRO, '.implode(', ', $colonne)
+            .' FROM dbo.MACCHINE ORDER BY MACCHINA', []);
     }
 
     /** Permessi effettivi dell'utente MES (evidenza di sola lettura) e ultimo campione per macchina. */

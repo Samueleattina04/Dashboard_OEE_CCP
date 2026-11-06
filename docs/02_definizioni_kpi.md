@@ -429,3 +429,14 @@ Campioni per fascia di 10 °C:
 
 Il giro 5 ha trovato uno storico valido di BROVRAF da gennaio 2024 a maggio 2025 (nel 2024 un campione al minuto); dal 13/05/2025 i valori sono tutti a 0 (PLC che non comunica).
 **Decisione: BROVRAF è fuori perimetro** e resta disattivata. Nel codice è presente la regola `soglia_colonne` (velocità motore > 0; temperature tutte a 0 = senza dato), riattivabile dal pannello Configurazione se servisse in futuro.
+
+## 16. Revisione del 07/11/2026 — NetPro live
+
+Su richiesta, la decisione 8 (§12, "nessuna lettura in tempo reale") è **rivista** per una sezione separata dai KPI:
+- comando `netpro:campiona` **ogni 2 minuti**: due SELECT su tabelle piccole e senza storico, `MACCHINE` (~26 righe, colonne di stato e contatori, esclusi nomi di persone) e `FIOLINES` (~57 righe, valore corrente dei segnali);
+- carico stimato: circa 80 righe ogni 2 minuti; ogni query è registrata nel log `mes`;
+- conservazione nel DB della dashboard per `NETPRO_LIVE_MINUTI` (default **10 minuti**), poi eliminazione automatica;
+- pagina **NetPro live**: tutte le macchine e tutti i segnali, valore attuale, variazione e ultimi valori nella finestra, ora di lettura dal PLC, segnali fermi da più di 30 minuti.
+
+I KPI (ore in funzione, Disponibilità, Prestazione) continuano a usare solo lo storico HIST di `FPROCESSDATA`.
+Per usare NetPro live come fonte storica (es. OEE di HEUFT, ULMA, PELAB) basterà aumentare la conservazione: da decidere.

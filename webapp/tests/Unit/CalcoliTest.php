@@ -15,6 +15,7 @@ use App\Domain\Finestre;
 use App\Domain\StatoMacchina;
 use App\Domain\ValoreMes;
 use App\Mes\GuardiaSolaLettura;
+use App\Support\Formato;
 use DateTimeImmutable;
 use DateTimeZone;
 use PHPUnit\Framework\TestCase;
@@ -233,6 +234,14 @@ class CalcoliTest extends TestCase
         $s = $this->secondiPerStato($iv);
         $this->assertSame(45 * 60, $s['MARCIA']);
         $this->assertSame(15 * 60, $s['FERMO']);
+    }
+
+    public function test_formato_valori_netpro(): void
+    {
+        $this->assertSame('21,8', Formato::valoreMes('21.80000'));
+        $this->assertSame('11.457', Formato::valoreMes('11457'));
+        $this->assertSame('3,9707', Formato::valoreMes('3,97070'));
+        $this->assertSame('Selecting', Formato::valoreMes('Selecting'));
     }
 
     public function test_guardia_sola_lettura(): void

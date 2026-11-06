@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Domain\ValoreMes;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
@@ -54,6 +55,21 @@ final class Formato
     public static function numero(float|string|null $x, int $decimali = 1): string
     {
         return $x === null ? 'n.d.' : number_format((float) $x, $decimali, ',', '.');
+    }
+
+    /**
+     * Valore NetPro in formato italiano per la sola visualizzazione: "21.80000" → "21,8", "11457" → "11.457".
+     * I valori non numerici restano come sono. Il valore originale va mostrato altrove (es. title).
+     */
+    public static function valoreMes(?string $v): string
+    {
+        $d = ValoreMes::decimale($v);
+        if ($d === null) {
+            return $v ?? '—';
+        }
+        $decimali = str_contains($d, '.') ? strlen(rtrim(substr($d, strpos($d, '.') + 1), '0')) : 0;
+
+        return number_format((float) $d, $decimali, ',', '.');
     }
 
     /** Spiegazioni dei motivi di "n.d." */

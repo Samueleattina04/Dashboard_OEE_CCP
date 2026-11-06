@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\ConfigurazioneController;
 use App\Http\Controllers\Admin\UtentiController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\MacchinaController;
+use App\Http\Controllers\NetProLiveController;
 use App\Http\Controllers\PanoramicaController;
 use App\Http\Controllers\QualitaDatoController;
 use App\Http\Controllers\StatoMacchineController;
@@ -31,6 +32,7 @@ Route::middleware(['auth', 'ruolo'])->group(function () {
     Route::get('/macchine/{codice}', MacchinaController::class)->name('macchina');
     Route::get('/storico', StoricoController::class)->name('storico');
     Route::get('/qualita-dato', QualitaDatoController::class)->name('qualita_dato');
+    Route::get('/netpro-live', NetProLiveController::class)->name('netpro_live');
     Route::get('/export/giornaliero.{formato}', [ExportController::class, 'giornaliero'])->name('export.giornaliero');
     Route::get('/export/confronto.{formato}', [ExportController::class, 'confronto'])->name('export.confronto');
 });

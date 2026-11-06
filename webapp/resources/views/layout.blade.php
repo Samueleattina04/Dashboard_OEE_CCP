@@ -20,6 +20,7 @@
         <a href="{{ route('stato') }}" @class(['attivo' => request()->routeIs('stato')])>Stato macchine</a>
         <a href="{{ route('storico') }}" @class(['attivo' => request()->routeIs('storico')])>Storico e confronti</a>
         <a href="{{ route('qualita_dato') }}" @class(['attivo' => request()->routeIs('qualita_dato')])>Qualità del dato</a>
+        <a href="{{ route('netpro_live') }}" @class(['attivo' => request()->routeIs('netpro_live')])>NetPro live</a>
         @if (auth()->user()->puoConfigurare())
             <a href="{{ route('admin.configurazione') }}" @class(['attivo' => request()->routeIs('admin.configurazione')])>Configurazione</a>
             <a href="{{ route('admin.audit') }}" @class(['attivo' => request()->routeIs('admin.audit')])>Storico modifiche</a>

@@ -15,3 +15,8 @@ Schedule::command('kpi:ricalcola')
     ->dailyAt('02:10')
     ->timezone('Europe/Rome')
     ->withoutOverlapping(120);
+
+// NetPro live: stato di tutte le macchine e segnali in tempo reale, ogni 2 minuti (2 letture piccole: MACCHINE, FIOLINES)
+Schedule::command('netpro:campiona')
+    ->everyTwoMinutes()
+    ->withoutOverlapping(5);
