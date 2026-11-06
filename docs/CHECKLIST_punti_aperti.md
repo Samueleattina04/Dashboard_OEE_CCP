@@ -71,7 +71,7 @@ Legenda: 🔴 urgente / blocca qualcosa · 🟠 importante · 🟢 quando possib
 
 ## H. Messa in produzione (dopo la prova)
 
-- [ ] 🟠 **HTTPS** su IIS con nome interno (es. `dashboard-oee.ase.intranet.nutkao.it`) e il certificato già usato dalle altre app. IIS sulla porta 8010 è già attivo dal 06/11/2026.
+- [ ] 🟠 **Certificato HTTPS attendibile sui PC**: distribuire `C:\ASE\dashboard-oee.cer` con una GPO (Autorità di certificazione radice attendibili), poi chiudere la porta 8010. Valutare una CA interna per tutte le app.
 - [ ] 🟠 **Record SPF di `pisti.it`**: aggiungere l'IP pubblico del server (invio diretto a `pisti-it.mail.protection.outlook.com:25` già funzionante, ma le email arrivano con l'avviso "mittente non verificato"). In alternativa, un connettore in ingresso in Exchange Online.
 - [ ] 🟠 **Backup** giornaliero di `dashboard_oee` (mysqldump) e dei log `storage\logs\mes-*.log`.
 - [ ] 🟢 `APP_ENV=production` e cache di config, route e viste.
