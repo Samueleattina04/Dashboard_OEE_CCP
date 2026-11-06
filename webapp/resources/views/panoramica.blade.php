@@ -18,9 +18,9 @@
         @if ($s['riepilogo']['giorni'] === 0)
             <p class="muto">Nessun dato nel periodo. Se l'app è appena installata, esegui l'importazione dello storico.</p>
         @else
-            @include('parziali.kpi', ['r' => $s['riepilogo']])
+            @include('parziali.kpi', ['r' => $s['riepilogo'], 'contatori' => $s['contatori'], 'stati' => $s['stati']])
             <h3>Ore per stato, giorno per giorno</h3>
-            @include('parziali.legenda')
+            @include('parziali.legenda', ['stati' => $s['stati']])
             <div class="grafico" id="grafico-{{ $i }}" role="img" aria-label="Ore per stato per giorno, {{ $m->codice }}"></div>
             <script type="application/json" id="dati-{{ $i }}">@json($s['serie'])</script>
         @endif

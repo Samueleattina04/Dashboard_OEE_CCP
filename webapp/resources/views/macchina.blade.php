@@ -4,7 +4,7 @@
 @php($F = \App\Support\Formato::class)
 <h1>{{ $macchina->codice }} · {{ $macchina->descrizione }}</h1>
 @include('parziali.filtri', ['extra' => ['giorno' => $giorno]])
-@include('parziali.kpi', ['r' => $riepilogo])
+@include('parziali.kpi', ['r' => $riepilogo, 'contatori' => $contatori, 'stati' => $stati])
 
 <section class="pannello">
     <form method="get" class="riga-flex" style="justify-content:space-between">
@@ -21,7 +21,7 @@
             default => 'stato '.$regola->parametri['colonna'].' (CurrentSmState)',
         } }} · valida dal {{ $F::oraLocale($regola->valido_dal, 'd/m/Y') }}</p>
     @endif
-    @include('parziali.legenda')
+    @include('parziali.legenda', ['stati' => $stati])
     <div class="timeline" role="img" aria-label="Timeline degli stati">
         @foreach ($timeline as $t)
             <div class="st-{{ $t['stato'] }}" style="left:{{ $t['sinistra'] }}%;width:{{ $t['larghezza'] }}%"
@@ -59,19 +59,21 @@
     </div>
     <div class="scorri">
     <table>
-        <thead><tr><th>Giorno</th><th class="num">In funzione h</th><th class="num">Ferma h</th><th class="num">Allarme h</th>
-            <th class="num">Riscald. h</th><th class="num">Raffredd. h</th><th class="num">Non class. h</th><th class="num">Senza dato h</th>
-            <th class="num">Pianificate h</th><th class="num">Disp.</th><th class="num">Prest.</th><th class="num">Kg sel.</th><th class="num">Kg scart.</th></tr></thead>
+        <thead><tr><th>Giorno</th>
+            @foreach ($stati as $s)<th class="num">{{ $s->etichetta() }} h</th>@endforeach
+            @if (in_array(\App\Domain\StatoMacchina::Riscaldamento, $stati, true))<th class="num">Avviamenti</th>@endif
+            <th class="num">Pianificate h</th><th class="num">Disp.</th>
+            @if ($contatori)<th class="num">Prest.</th><th class="num">Kg sel.</th><th class="num">Kg scart.</th>@endif
+        </tr></thead>
         <tbody>
         @foreach ($giorni->sortByDesc('giorno') as $g)
             <tr>
                 <td><a href="{{ request()->fullUrlWithQuery(['giorno' => $g->giorno->format('Y-m-d')]) }}">{{ $g->giorno->format('d/m/Y') }}</a></td>
-                <td class="num">{{ $F::ore($g->secondi_marcia) }}</td><td class="num">{{ $F::ore($g->secondi_fermo) }}</td>
-                <td class="num">{{ $F::ore($g->secondi_allarme) }}</td><td class="num">{{ $F::ore($g->secondi_riscaldamento) }}</td>
-                <td class="num">{{ $F::ore($g->secondi_raffreddamento) }}</td><td class="num">{{ $F::ore($g->secondi_non_classificato) }}</td>
-                <td class="num">{{ $F::ore($g->secondi_senza_dato) }}</td><td class="num">{{ $F::ore($g->secondi_pianificati) }}</td>
-                <td class="num">{{ $F::percentuale($g->disponibilita) }}</td><td class="num">{{ $F::percentuale($g->prestazione) }}</td>
-                <td class="num">{{ $F::numero($g->kg_selezionati, 0) }}</td><td class="num">{{ $F::numero($g->kg_scartati, 0) }}</td>
+                @foreach ($stati as $s)<td class="num">{{ $F::ore($g->{$s->colonnaSecondi()}) }}</td>@endforeach
+                @if (in_array(\App\Domain\StatoMacchina::Riscaldamento, $stati, true))<td class="num">{{ $g->avviamenti }}</td>@endif
+                <td class="num">{{ $F::ore($g->secondi_pianificati) }}</td><td class="num">{{ $F::percentuale($g->disponibilita) }}</td>
+                @if ($contatori)<td class="num">{{ $F::percentuale($g->prestazione) }}</td>
+                <td class="num">{{ $F::numero($g->kg_selezionati, 0) }}</td><td class="num">{{ $F::numero($g->kg_scartati, 0) }}</td>@endif
             </tr>
         @endforeach
         </tbody>

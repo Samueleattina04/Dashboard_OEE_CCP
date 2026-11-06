@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\StatoMacchina;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -43,6 +44,23 @@ class Macchina extends Model
             ->where(fn ($q) => $q->whereNull('valido_al')->orWhere('valido_al', '>', $istante))
             ->orderByDesc('valido_dal')
             ->first();
+    }
+
+    /** Regola di stato attuale (l'ultima versione). */
+    public function regolaAttuale(): ?RegolaStato
+    {
+        return $this->regole()->orderByDesc('valido_dal')->first();
+    }
+
+    /** @return StatoMacchina[] stati che riguardano questa macchina (tutti se non c'è una regola) */
+    public function statiRilevanti(): array
+    {
+        return $this->regolaAttuale()?->statiPossibili() ?? StatoMacchina::ordineVisualizzazione();
+    }
+
+    public function haContatori(): bool
+    {
+        return (bool) $this->regolaAttuale()?->haContatori();
     }
 
     public function capacitaValidaIl(string $giorno): ?CapacitaNominale

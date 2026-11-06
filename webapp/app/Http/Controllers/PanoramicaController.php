@@ -19,6 +19,8 @@ class PanoramicaController extends Controller
                 'macchina' => $m,
                 'riepilogo' => $kpi->riepilogo($giorni),
                 'serie' => $this->serie($giorni),
+                'stati' => $m->statiRilevanti(),
+                'contatori' => $m->haContatori(),
             ];
         }
 

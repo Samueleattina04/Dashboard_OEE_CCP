@@ -70,6 +70,8 @@ class MacchinaController extends Controller
             'giorni' => $giorni,
             'riepilogo' => $kpi->riepilogo($giorni),
             'regola' => $macchina->regolaValidaIl($inizio),
+            'stati' => $macchina->statiRilevanti(),
+            'contatori' => $macchina->haContatori(),
         ]);
     }
 }

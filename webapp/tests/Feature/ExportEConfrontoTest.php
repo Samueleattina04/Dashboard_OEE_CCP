@@ -50,9 +50,16 @@ class ExportEConfrontoTest extends TestCase
         $dati = str_getcsv($righe[2], ';');
         $this->assertSame('FORNOKING500', $dati[0]);
         $this->assertSame('15/10/2026', $dati[1]);
+        // Colonne del forno: in funzione, riscaldamento, raffreddamento, ferma, senza dato, …
+        $intestazione = str_getcsv($righe[1], ';');
+        $this->assertSame('Ore in funzione', $intestazione[2]);
         $this->assertSame('6,50', $dati[2]);
-        $this->assertSame('17,50', $dati[3]);
-        $this->assertSame('81,25', $dati[16]); // Disponibilità 6,5/8 = 81,25 %
+        $this->assertSame('17,50', $dati[array_search('Ore ferma', $intestazione)]);
+        $this->assertSame('81,25', $dati[array_search('Disponibilità %', $intestazione)]); // 6,5/8 = 81,25 %
+        // Il forno non ha contatori né stati della selezionatrice
+        $this->assertNotContains('Kg selezionati', $intestazione);
+        $this->assertNotContains('Ore allarme', $intestazione);
+        $this->assertContains('Ore riscaldamento', $intestazione);
     }
 
     public function test_excel_valido(): void

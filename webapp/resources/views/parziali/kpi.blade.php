@@ -21,17 +21,19 @@
         <div class="valore">{{ $F::percentuale($r['disponibilita']) }}</div>
         <div class="nota">{{ $F::motivo($r['motivi']['disponibilita'] ?? null) }}</div>
     </div>
+    @if ($contatori ?? true)
     <div>
         <div class="etichetta">Prestazione <span class="info" title="Kg in ingresso nel turno / (capacità nominale kg/h × ore in funzione nel turno). Kg indicativi, non fiscali (manuale 3UVision).">i</span></div>
         <div class="valore">{{ $F::percentuale($r['prestazione']) }}</div>
         <div class="nota">{{ $F::motivo($r['motivi']['prestazione'] ?? null) }}</div>
     </div>
+    @endif
     <div>
         <div class="etichetta">OEE <span class="info" title="Disponibilità × Prestazione × Qualità. Se un fattore non è disponibile l'OEE è n.d. (mai sostituito con 100%).">i</span></div>
         <div class="valore">{{ $F::percentuale($r['oee']) }}</div>
         <div class="nota">{{ $F::motivo($r['motivi']['qualita'] ?? null) }}</div>
     </div>
-    @if ($r['secondi_riscaldamento'] + $r['secondi_raffreddamento'] > 0)
+    @if (isset($stati) ? in_array(\App\Domain\StatoMacchina::Riscaldamento, $stati, true) : $r['secondi_riscaldamento'] + $r['secondi_raffreddamento'] > 0)
     <div>
         <div class="etichetta">Riscaldamento / raffreddamento <span class="info" title="Forno: temperatura di tostatura nella fascia transitoria (Admin: 70–100 °C), in salita o in discesa. Non conta come «In funzione».">i</span></div>
         <div class="valore">{{ $F::ore($r['secondi_riscaldamento']) }} / {{ $F::ore($r['secondi_raffreddamento']) }} h</div>

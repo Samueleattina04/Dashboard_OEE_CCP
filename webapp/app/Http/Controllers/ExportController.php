@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\StatoMacchina;
 use App\Services\LetturaKpi;
 use App\Support\Filtri;
 use App\Support\Formato;
@@ -23,26 +24,42 @@ class ExportController extends Controller
         abort_unless(in_array($formato, ['csv', 'xlsx'], true), 404);
         $filtri = Filtri::daRichiesta($request);
 
-        $intestazione = ['Macchina', 'Giorno', 'Ore in funzione', 'Ore ferma', 'Ore allarme', 'Ore avvio/setup',
-            'Ore riscaldamento', 'Ore raffreddamento', 'Ore non classificate', 'Ore senza dato', 'Campioni',
-            'Avviamenti', 'Ore pianificate', 'Ore in funzione nel turno', 'Kg selezionati', 'Kg scartati',
-            'Disponibilità %', 'Prestazione %', 'Qualità %', 'OEE %', 'Note'];
+        $macchine = $kpi->macchine($filtri->macchina);
+        // Solo le colonne che riguardano le macchine esportate (unione degli stati possibili)
+        $stati = [];
+        $contatori = false;
+        foreach ($macchine as $m) {
+            $stati = array_merge($stati, $m->statiRilevanti());
+            $contatori = $contatori || $m->haContatori();
+        }
+        $stati = array_values(array_filter(StatoMacchina::ordineVisualizzazione(), fn ($x) => in_array($x, $stati, true)));
+        $avviamenti = in_array(StatoMacchina::Riscaldamento, $stati, true);
+
+        $intestazione = array_merge(['Macchina', 'Giorno'], array_map(fn ($x) => 'Ore '.mb_strtolower($x->etichetta()), $stati),
+            ['Campioni'], $avviamenti ? ['Avviamenti'] : [], ['Ore pianificate', 'Ore in funzione nel turno', 'Disponibilità %'],
+            $contatori ? ['Prestazione %', 'Kg selezionati', 'Kg scartati'] : [], ['OEE %', 'Note']);
         $righe = [];
-        foreach ($kpi->macchine($filtri->macchina) as $m) {
+        $ore = fn (?int $sec) => $sec === null ? null : round($sec / 3600, 2);
+        $pct = fn ($x) => $x === null ? null : round((float) $x * 100, 2);
+        foreach ($macchine as $m) {
             foreach ($kpi->giorni($m, $filtri->da, $filtri->a) as $g) {
-                $ore = fn (?int $s) => $s === null ? null : round($s / 3600, 2);
-                $pct = fn ($x) => $x === null ? null : round((float) $x * 100, 2);
-                $righe[] = [
-                    $m->codice, $g->giorno->format('d/m/Y'),
-                    $ore($g->secondi_marcia), $ore($g->secondi_fermo), $ore($g->secondi_allarme), $ore($g->secondi_avvio),
-                    $ore($g->secondi_riscaldamento), $ore($g->secondi_raffreddamento), $ore($g->secondi_non_classificato),
-                    $ore($g->secondi_senza_dato), $g->campioni_presenti, $g->avviamenti,
-                    $ore($g->secondi_pianificati), $ore($g->secondi_marcia_in_turno),
-                    $g->kg_selezionati !== null ? (float) $g->kg_selezionati : null,
-                    $g->kg_scartati !== null ? (float) $g->kg_scartati : null,
-                    $pct($g->disponibilita), $pct($g->prestazione), $pct($g->qualita), $pct($g->oee),
-                    implode('; ', array_map([Formato::class, 'motivo'], array_values($g->motivi ?? []))),
-                ];
+                $riga = [$m->codice, $g->giorno->format('d/m/Y')];
+                foreach ($stati as $x) {
+                    $riga[] = $ore($g->{$x->colonnaSecondi()});
+                }
+                $riga[] = $g->campioni_presenti;
+                if ($avviamenti) {
+                    $riga[] = $g->avviamenti;
+                }
+                array_push($riga, $ore($g->secondi_pianificati), $ore($g->secondi_marcia_in_turno), $pct($g->disponibilita));
+                if ($contatori) {
+                    array_push($riga, $pct($g->prestazione),
+                        $g->kg_selezionati !== null ? (float) $g->kg_selezionati : null,
+                        $g->kg_scartati !== null ? (float) $g->kg_scartati : null);
+                }
+                $riga[] = $pct($g->oee);
+                $riga[] = implode('; ', array_map([Formato::class, 'motivo'], array_values($g->motivi ?? [])));
+                $righe[] = $riga;
             }
         }
 
