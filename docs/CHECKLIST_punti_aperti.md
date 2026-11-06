@@ -7,9 +7,8 @@ Legenda: 🔴 urgente / blocca qualcosa · 🟠 importante · 🟢 quando possib
 
 ## A. Sicurezza (da fare subito)
 
-- [x] 🔴 **Cambiare la password di `root` di MySQL** — fatto il 06/11/2026. sul server .206: è stata mostrata in chiaro durante l'installazione. Prima verifica quali altre app usano `root`, perché andrà aggiornata anche nei loro `.env`.
 - [ ] 🔴 **Utente MySQL dedicato per la dashboard** (`dashboard`, permessi solo su `dashboard_oee`) al posto di `root` (minimo privilegio, NIS2).
-- [x] 🔴 **Credenziali SQL in chiaro nei config FDI** (anomalia A8) — password cambiate il 06/11/2026; resta da limitare l'accesso alle cartelle `config`/`xml`.: gli utenti `netpro` e `FDI` hanno password banali e permessi di scrittura sul MES, e le password sono leggibili nei file `C:\Qualitas\NetPro\FDI\Apps\AppDBI_*\xml\Config.xml`. Da far cambiare (con Qualitas) e limitare l'accesso alle cartelle `config`/`xml`.
+- [ ] 🟠 Limitare l'accesso alle cartelle `config`/`xml` di FDI (`C:\Qualitas\NetPro\FDI`) ai soli amministratori.
 - [ ] 🟠 Verificare che il file `.env` della dashboard sia leggibile solo da amministratori (`icacls`, già indicato).
 
 ## B. Configurazione nella dashboard (la fai tu, dal menu Configurazione)
