@@ -9,7 +9,8 @@ Legenda: 👤 = fai tu (o la persona indicata) · 🤖 = faccio io · 🤝 = ins
 
 ## 0. Prerequisiti (da chiudere prima di iniziare)
 
-- [ ] 👤 App pubblicata su **IIS** e **scheduler automatico** attivo (Utilità di pianificazione), con almeno 7 giorni di funzionamento continuo.
+- [x] 👤 App pubblicata su **IIS** (porta 8010) e **scheduler automatico** attivo — fatto il 06/11/2026.
+- [ ] 👤 Almeno 7 giorni di funzionamento continuo prima della riconciliazione.
 - [ ] 👤 **Calendario turni** reale inserito e assegnato a FORNOKING500 e FX10130.
 - [ ] 👤 **Capacità nominale** di FX10130 (kg/h) inserita.
 - [ ] 👤 Risposta di 3UVision sul significato di **`End3`** (oppure decisione di lasciarlo "non classificato" anche in verifica).

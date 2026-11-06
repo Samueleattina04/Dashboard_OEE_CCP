@@ -173,28 +173,85 @@ Se il server non ha internet, scarica da un altro PC e copia i file sul server.
 
 ---
 
-## Parte B — Produzione (dopo la prova)
+## Parte B — Produzione (configurazione realizzata il 06/11/2026)
 
-1. **MySQL 8.4 LTS** per Windows, installato come servizio:
-   - crea il database `dashboard_oee` (utf8mb4) e un utente dedicato con permessi solo su quel database;
-   - nel `.env` imposta `DB_CONNECTION=mysql` e le credenziali, poi esegui `php artisan migrate --seed --force` e ricarica lo storico (A6).
-2. **IIS** con FastCGI per PHP:
-   - sito con cartella fisica `C:\ASE\dashboard\public`, modulo URL Rewrite (il file `web.config` di Laravel è in `public`);
-   - **HTTPS** con il certificato della CA interna; chiudere la porta 8000.
-   - permessi di scrittura per l'utente del pool IIS solo su `storage` e `bootstrap\cache`.
-3. **Job pianificati**: nell'Utilità di pianificazione di Windows crea un'attività che ogni minuto esegue `C:\php\php.exe C:\ASE\dashboard\artisan schedule:run`, con un utente di servizio dedicato. L'attività avvia `mes:importa` ogni 15 minuti e `kpi:ricalcola` ogni notte alle 02:10.
-4. **Posta**: impostare `MAIL_MAILER=smtp` e i parametri della casella aziendale per gli inviti.
-5. **Backup**: dump giornaliero di MySQL con `mysqldump` pianificato, più una copia di `.env` (in luogo protetto) e di `storage\logs\mes*.log`, che sono il registro delle query sul MES.
-6. `APP_ENV=production`, `APP_DEBUG=false`, poi:
-   ```bash
-   php artisan config:cache
-   ```
-   ```bash
-   php artisan route:cache
-   ```
-   ```bash
-   php artisan view:cache
-   ```
+**Database**: MySQL 8.4 già presente sul server, database `dashboard_oee` (da usare con un utente dedicato, non `root`).
+
+**Scheduler** (Utilità di pianificazione, account SYSTEM): attività "Dashboard OEE - scheduler" con due trigger, all'avvio e "da adesso", entrambi ripetuti ogni minuto. Esegue `C:\php\php.exe artisan schedule:run` nella cartella `C:\ASE\Dashboard_OEE_CCP\webapp`.
+```bash
+$php = "C:\php\php.exe"; $app = "C:\ASE\Dashboard_OEE_CCP\webapp"; $azione = New-ScheduledTaskAction -Execute $php -Argument "artisan schedule:run" -WorkingDirectory $app; $avvio = New-ScheduledTaskTrigger -AtStartup; $avvio.Repetition = (New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 1)).Repetition; $ora = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 1); $impostazioni = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 30) -MultipleInstances IgnoreNew -StartWhenAvailable; Register-ScheduledTask -TaskName "Dashboard OEE - scheduler" -Action $azione -Trigger $avvio, $ora -Settings $impostazioni -User "SYSTEM" -RunLevel Highest -Force
+```
+Verifica (`NextRunTime` deve essere valorizzato):
+```bash
+Get-ScheduledTaskInfo -TaskName "Dashboard OEE - scheduler" | Select-Object LastRunTime, LastTaskResult, NextRunTime
+```
+
+**IIS**: pool `DashboardOEE` (senza .NET), sito "Dashboard OEE" su `*:8010`, cartella `C:\ASE\Dashboard_OEE_CCP\webapp\public`. PHP via FastCGI `C:\PHP\php-cgi.exe` (configurazione del server). `public\web.config` imposta `index.php` come pagina predefinita e la riscrittura degli indirizzi (modulo URL Rewrite).
+```bash
+Import-Module WebAdministration
+```
+```bash
+New-WebAppPool -Name "DashboardOEE"
+```
+```bash
+Set-ItemProperty IIS:\AppPools\DashboardOEE -Name managedRuntimeVersion -Value ""
+```
+```bash
+New-Website -Name "Dashboard OEE" -Port 8010 -PhysicalPath "C:\ASE\Dashboard_OEE_CCP\webapp\public" -ApplicationPool "DashboardOEE"
+```
+Permessi: lettura su tutta l'app, scrittura solo su `storage` e `bootstrap\cache`, lettura sul `.env`.
+```bash
+icacls "C:\ASE\Dashboard_OEE_CCP\webapp" /grant "IIS AppPool\DashboardOEE:(OI)(CI)RX" /T /Q
+```
+```bash
+icacls "C:\ASE\Dashboard_OEE_CCP\webapp\storage" /grant "IIS AppPool\DashboardOEE:(OI)(CI)M" /T /Q
+```
+```bash
+icacls "C:\ASE\Dashboard_OEE_CCP\webapp\bootstrap\cache" /grant "IIS AppPool\DashboardOEE:(OI)(CI)M" /T /Q
+```
+```bash
+icacls "C:\ASE\Dashboard_OEE_CCP\webapp\.env" /grant "IIS AppPool\DashboardOEE:R"
+```
+
+**Posta**: invio diretto a `pisti-it.mail.protection.outlook.com:25` (solo destinatari del tenant Microsoft 365). Resta da aggiungere l'IP pubblico `217.58.204.66` al record SPF di `pisti.it`.
+
+**Da completare**:
+- HTTPS con nome interno, es. `dashboard-oee.ase.intranet.nutkao.it`, con il certificato già usato dalle altre app;
+- utente MySQL dedicato;
+- backup giornaliero (mysqldump) di `dashboard_oee` e dei log `storage\logs\mes-*.log`.
+
+## Aggiornamento dopo un `git pull`
+
+```bash
+cd C:\ASE\Dashboard_OEE_CCP
+```
+```bash
+git pull
+```
+```bash
+cd webapp
+```
+```bash
+composer install --no-dev --optimize-autoloader
+```
+```bash
+php artisan migrate --force
+```
+```bash
+php artisan optimize:clear
+```
+```bash
+php artisan config:cache
+```
+```bash
+php artisan route:cache
+```
+```bash
+php artisan view:cache
+```
+```bash
+Restart-WebAppPool -Name "DashboardOEE"
+```
 
 ## Comandi utili
 
