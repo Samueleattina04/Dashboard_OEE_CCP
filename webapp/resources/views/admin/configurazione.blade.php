@@ -9,14 +9,17 @@
 <section class="pannello">
     <h2>Importazione dal MES</h2>
     <table>
-        <thead><tr><th>Macchina</th><th>Ultimo FTIMESTAMP importato</th><th>Ultimo esito</th><th>Ultima esecuzione</th></tr></thead>
+        <thead><tr><th>Macchina</th><th>Ultimo FTIMESTAMP importato</th><th>Ultimo esito</th><th>Ultima esecuzione</th><th>Attiva</th></tr></thead>
         <tbody>
         @foreach ($macchine as $m)
             @php($s = $sync[$m->id] ?? null)
             <tr><td>{{ $m->codice }} @unless ($m->attiva)<span class="muto">(non attiva)</span>@endunless</td>
                 <td>{{ $s?->ultimo_ftimestamp ?? '—' }}</td>
                 <td>{{ $s?->esito ?? '—' }} @if ($s?->messaggio)<span class="piccolo muto">{{ \Illuminate\Support\Str::limit($s->messaggio, 120) }}</span>@endif</td>
-                <td>{{ $s?->ultima_esecuzione ? $F::oraLocale($s->ultima_esecuzione) : '—' }}</td></tr>
+                <td>{{ $s?->ultima_esecuzione ? $F::oraLocale($s->ultima_esecuzione) : '—' }}</td>
+                <td><form method="post" action="{{ route('admin.macchina.attiva', $m) }}" onsubmit="return confirm('{{ $m->attiva ? 'Disattivare' : 'Attivare' }} {{ $m->codice }}?')">@csrf
+                    <input type="hidden" name="attiva" value="{{ $m->attiva ? 0 : 1 }}">
+                    <button class="secondario">{{ $m->attiva ? 'Disattiva' : 'Attiva' }}</button></form></td></tr>
         @endforeach
         </tbody>
     </table>
@@ -37,6 +40,11 @@
                     <label>In funzione da (°C)<input type="number" step="0.1" name="soglia_marcia" value="{{ $r->parametri['soglia_marcia'] }}" required></label>
                     <label>Transitorio da (°C)<input type="number" step="0.1" name="soglia_transitorio" value="{{ $r->parametri['soglia_transitorio'] }}" required></label>
                     <span class="piccolo muto">Colonna {{ $r->parametri['colonna'] }} (temperatura di tostatura). Sotto il transitorio: ferma.</span>
+                </div>
+            @elseif ($r->tipo === 'soglia_colonne')
+                <div class="filtri">
+                    <label>In funzione se maggiore di<input type="number" step="0.01" min="0" name="soglia" value="{{ $r->parametri['soglia'] }}" required></label>
+                    <span class="piccolo muto">Colonne {{ implode(', ', $r->parametri['colonne']) }} (velocità motore). Se {{ implode(', ', $r->parametri['colonne_validita'] ?? []) }} valgono tutte esattamente 0: senza dato (PLC non comunica).</span>
                 </div>
             @else
                 <p class="piccolo muto">Valori di {{ $r->parametri['colonna'] }} (CurrentSmState) e stato attribuito:</p>

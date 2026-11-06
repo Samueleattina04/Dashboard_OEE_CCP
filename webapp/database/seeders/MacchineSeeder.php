@@ -71,12 +71,28 @@ class MacchineSeeder extends Seeder
             ]);
         }
 
-        Macchina::updateOrCreate(['codice' => 'BROVRAF'], [
+        // BROVRAF: storico valido gen 2024 → 13/05/2025 (nel 2024 un campione al minuto); poi PLC non comunica.
+        // Resta disattivata finché non viene confermata la regola (velocità motore = velocità reale?).
+        $brovraf = Macchina::firstOrCreate(['codice' => 'BROVRAF'], [
             'descrizione' => 'Raffinatrice Brovind linea pasta',
             'attiva' => false,
             'dati_non_affidabili' => true,
-            'motivo_non_affidabile' => 'Valori a 0 dal 13/05/2025 (anomalia A3): in sospeso',
+            'motivo_non_affidabile' => 'PLC non comunica dal 13/05/2025 (valori tutti a 0, anomalia A3)',
             'colonne_import' => array_map(fn ($i) => sprintf('FVALUE%02d', $i), range(1, 11)),
         ]);
+        if (! $brovraf->regole()->exists()) {
+            RegolaStato::create([
+                'macchina_id' => $brovraf->id,
+                'tipo' => 'soglia_colonne',
+                'valido_dal' => '2000-01-01 00:00:00',
+                'note' => 'In funzione se velocità motore raffinatrice 1 o 2 > 0; temperature prodotto a 0 = PLC non comunica',
+                'parametri' => [
+                    'colonne' => ['FVALUE07', 'FVALUE08'],
+                    'soglia' => '0',
+                    'colonne_validita' => ['FVALUE01', 'FVALUE02', 'FVALUE03', 'FVALUE04'],
+                    'g_max_minuti' => 20,
+                ],
+            ]);
+        }
     }
 }

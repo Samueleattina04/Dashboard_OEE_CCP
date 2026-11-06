@@ -74,6 +74,9 @@ class ConfigurazioneController extends Controller
             ]);
             $parametri['soglia_marcia'] = (string) $dati['soglia_marcia'];
             $parametri['soglia_transitorio'] = (string) $dati['soglia_transitorio'];
+        } elseif ($attuale->tipo === 'soglia_colonne') {
+            $dati = $request->validate(['soglia' => ['required', 'numeric', 'min:0']]);
+            $parametri['soglia'] = (string) $dati['soglia'];
         } else {
             $valori = array_column(StatoMacchina::cases(), 'value');
             $dati = $request->validate([
@@ -107,6 +110,19 @@ class ConfigurazioneController extends Controller
         $n = $this->ricalcolaDa($ricalcolo, $macchina, $comune['valido_dal']);
 
         return back()->with('ok', "Regola di {$macchina->codice} aggiornata dal {$comune['valido_dal']}: ricalcolati {$n} giorni.");
+    }
+
+    /** Attiva/disattiva una macchina (le macchine non attive non vengono importate né mostrate). */
+    public function impostaAttiva(Request $request, Macchina $macchina)
+    {
+        $dati = $request->validate(['attiva' => ['required', 'boolean']]);
+        $prima = $macchina->only(['attiva']);
+        $macchina->update(['attiva' => (bool) $dati['attiva']]);
+        Audit::registra('modifica', $macchina, $prima);
+
+        return back()->with('ok', "{$macchina->codice} ".($macchina->attiva
+            ? 'attivata. Per caricare lo storico: php artisan mes:storico '.$macchina->codice.' --da=AAAA-MM-GG'
+            : 'disattivata.'));
     }
 
     public function aggiungiCapacita(Request $request, Macchina $macchina, RicalcoloKpi $ricalcolo)

@@ -36,6 +36,7 @@ Route::middleware(['auth', 'ruolo:superadmin,admin'])->prefix('admin')->name('ad
     Route::get('/configurazione', [$c, 'index'])->name('configurazione');
     Route::get('/storico-modifiche', [$c, 'audit'])->name('audit');
     Route::post('/macchine/{macchina}/regola', [$c, 'aggiornaRegola'])->name('regola');
+    Route::post('/macchine/{macchina}/attiva', [$c, 'impostaAttiva'])->name('macchina.attiva');
     Route::post('/macchine/{macchina}/capacita', [$c, 'aggiungiCapacita'])->name('capacita');
     Route::post('/macchine/{macchina}/target', [$c, 'aggiungiTarget'])->name('target');
     Route::post('/macchine/{macchina}/calendario', [$c, 'assegnaCalendario'])->name('assegna_calendario');

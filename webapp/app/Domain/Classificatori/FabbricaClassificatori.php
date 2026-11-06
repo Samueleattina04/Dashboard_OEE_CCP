@@ -11,6 +11,7 @@ final class FabbricaClassificatori
         return match ($tipo) {
             'mappa_valori' => ClassificatoreMappaValori::daParametri($parametri),
             'soglie_temperatura' => ClassificatoreSoglieTemperatura::daParametri($parametri),
+            'soglia_colonne' => ClassificatoreSogliaColonne::daParametri($parametri),
             default => throw new InvalidArgumentException("Tipo di regola sconosciuto: {$tipo}"),
         };
     }

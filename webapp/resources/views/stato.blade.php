@@ -15,6 +15,7 @@
         <div class="stato-grande" style="margin:.5rem 0"><i class="campione-colore st-{{ $s['stato']->value }}" style="width:18px;height:18px"></i>{{ $s['stato']->etichetta() }}</div>
         @if ($s['dal'])<div>da {{ $F::oraLocale($s['dal']) }}</div>@endif
         @if ($s['motivo'] === 'campo_vuoto')<div class="piccolo muto">Il record FDI arriva ma il campo è vuoto (macchina non comunica?)</div>@endif
+        @if ($s['motivo'] === 'valori_tutti_zero')<div class="piccolo muto">Valori tutti a zero (temperature comprese): il PLC non comunica</div>@endif
         @if ($s['motivo'] === 'valore_non_mappato')<div class="piccolo muto">Valore non previsto dalle regole: da classificare (Configurazione)</div>@endif
         @if ($c)
             <div class="piccolo muto" style="margin-top:.5rem">Ultimo campione: {{ $F::oraLocale($c->getRawOriginal('ts_utc')) }}</div>

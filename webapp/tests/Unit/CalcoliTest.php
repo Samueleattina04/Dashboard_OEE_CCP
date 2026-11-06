@@ -6,6 +6,7 @@ use App\Domain\CalcoloKpi;
 use App\Domain\CalendarioPianificato;
 use App\Domain\Campione;
 use App\Domain\Classificatori\ClassificatoreMappaValori;
+use App\Domain\Classificatori\ClassificatoreSogliaColonne;
 use App\Domain\Classificatori\ClassificatoreSoglieTemperatura;
 use App\Domain\ContatoreDelta;
 use App\Domain\ConvertitoreTimestamp;
@@ -204,6 +205,34 @@ class CalcoliTest extends TestCase
         $this->assertSame(8 * 3600, Finestre::durata(CalendarioPianificato::finestre('2026-11-05', $turni, [])));
         $this->assertSame(0, Finestre::durata(CalendarioPianificato::finestre('2026-11-05', $turni, [['ora_inizio' => null, 'ora_fine' => null]])));
         $this->assertSame(0, Finestre::durata(CalendarioPianificato::finestre('2026-11-06', $turni, [])));
+    }
+
+    /** BROVRAF: in funzione se un motore > 0; temperature tutte a 0 = PLC che non comunica (senza dato). */
+    public function test_brovraf_soglia_colonne_e_valori_tutti_zero(): void
+    {
+        $cl = new ClassificatoreSogliaColonne(['FVALUE07', 'FVALUE08'], '0', ['FVALUE01', 'FVALUE02']);
+        $st = fn (array $v) => $cl->classifica($this->campione('2024-06-01 10:00:00', $v), null, null);
+
+        $this->assertSame(StatoMacchina::Marcia, $st(['FVALUE01' => '38,2', 'FVALUE02' => '41', 'FVALUE07' => '0', 'FVALUE08' => '75'])->stato);
+        $this->assertSame(StatoMacchina::Fermo, $st(['FVALUE01' => '25,1', 'FVALUE02' => '24', 'FVALUE07' => '0', 'FVALUE08' => '0'])->stato);
+        $e = $st(['FVALUE01' => '0', 'FVALUE02' => '0,00000', 'FVALUE07' => '0', 'FVALUE08' => '0']);
+        $this->assertSame(StatoMacchina::SenzaDato, $e->stato);
+        $this->assertSame('valori_tutti_zero', $e->motivo);
+        $this->assertSame(StatoMacchina::SenzaDato, $st(['FVALUE01' => '30', 'FVALUE02' => '30', 'FVALUE07' => '', 'FVALUE08' => null])->stato);
+    }
+
+    /** Campioni al minuto (BROVRAF 2024): 60 campioni in un'ora, 45 in marcia → 45 min. */
+    public function test_campioni_al_minuto(): void
+    {
+        $cl = new ClassificatoreSogliaColonne(['FVALUE07'], '0');
+        $c = [];
+        for ($i = 0; $i < 60; $i++) {
+            $c[] = $this->campione(sprintf('2024-06-01 10:%02d:00', $i), ['FVALUE07' => $i < 45 ? '80' : '0']);
+        }
+        $iv = (new CostruttoreIntervalli($cl, 1200))->costruisci($c, $this->utc('2024-06-01 10:00:00'), $this->utc('2024-06-01 11:00:00'));
+        $s = $this->secondiPerStato($iv);
+        $this->assertSame(45 * 60, $s['MARCIA']);
+        $this->assertSame(15 * 60, $s['FERMO']);
     }
 
     public function test_guardia_sola_lettura(): void

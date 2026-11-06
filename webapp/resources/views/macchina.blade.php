@@ -15,9 +15,11 @@
         </span>
     </form>
     @if ($regola)
-        <p class="piccolo muto">Regola: {{ $regola->tipo === 'soglie_temperatura'
-            ? 'temperatura '.$regola->parametri['colonna'].' ≥ '.$regola->parametri['soglia_marcia'].' °C in funzione, '.$regola->parametri['soglia_transitorio'].'–'.$regola->parametri['soglia_marcia'].' °C transitorio'
-            : 'stato '.$regola->parametri['colonna'].' (CurrentSmState)' }} · valida dal {{ $F::oraLocale($regola->valido_dal, 'd/m/Y') }}</p>
+        <p class="piccolo muto">Regola: {{ match ($regola->tipo) {
+            'soglie_temperatura' => 'temperatura '.$regola->parametri['colonna'].' ≥ '.$regola->parametri['soglia_marcia'].' °C in funzione, '.$regola->parametri['soglia_transitorio'].'–'.$regola->parametri['soglia_marcia'].' °C transitorio',
+            'soglia_colonne' => 'in funzione se '.implode(' o ', $regola->parametri['colonne']).' > '.$regola->parametri['soglia'],
+            default => 'stato '.$regola->parametri['colonna'].' (CurrentSmState)',
+        } }} · valida dal {{ $F::oraLocale($regola->valido_dal, 'd/m/Y') }}</p>
     @endif
     @include('parziali.legenda')
     <div class="timeline" role="img" aria-label="Timeline degli stati">

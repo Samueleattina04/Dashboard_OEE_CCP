@@ -67,6 +67,7 @@ final class Formato
             'nessun_contatore_di_produzione' => 'La macchina non registra quantità prodotte',
             'definizione_qualita_non_disponibile' => 'Definizione di Qualità non ancora stabilita',
             'regola_di_stato_non_configurata' => 'Regola di stato non configurata',
+            'valori_tutti_zero' => 'Valori tutti a zero: il PLC non comunica',
             default => $codice,
         };
     }
