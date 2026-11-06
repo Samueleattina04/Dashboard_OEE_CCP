@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Mes\RepositoryMes;
 use App\Mes\SorgenteCampioni;
+use App\Mes\SorgenteNetProLive;
 use App\Services\LetturaKpi;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
@@ -17,6 +18,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(SorgenteCampioni::class, RepositoryMes::class);
+        $this->app->bind(SorgenteNetProLive::class, RepositoryMes::class);
     }
 
     /**

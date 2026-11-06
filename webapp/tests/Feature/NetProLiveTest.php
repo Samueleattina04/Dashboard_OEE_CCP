@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Mes\GuardiaSolaLettura;
 use App\Mes\RepositoryMes;
+use App\Mes\SorgenteCampioni;
 use App\Mes\SorgenteNetProLive;
 use App\Models\User;
+use App\Services\CampionatoreNetPro;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -99,5 +101,13 @@ class NetProLiveTest extends TestCase
         $this->assertStringContainsString('FROM dbo.FIOLINES', $repo->sql[0]);
         $this->assertStringContainsString('FROM dbo.MACCHINE', $repo->sql[1]);
         $this->assertStringNotContainsString('RESPONSABILE', $repo->sql[1]);
+    }
+
+    /** Senza simulazioni: il container deve fornire il repository reale per entrambe le interfacce MES. */
+    public function test_collegamenti_reali_del_container(): void
+    {
+        $this->assertInstanceOf(RepositoryMes::class, app(SorgenteNetProLive::class));
+        $this->assertInstanceOf(RepositoryMes::class, app(SorgenteCampioni::class));
+        $this->assertInstanceOf(CampionatoreNetPro::class, app(CampionatoreNetPro::class));
     }
 }
