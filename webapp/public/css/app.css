@@ -118,3 +118,5 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 form.in-linea { display: inline; }
 @media (max-width: 640px) { .testata .utente { margin-left: 0; } .kpi .valore { font-size: 1.15rem; } }
 [hidden] { display: none !important; }
+.tema-pulsante { font-size: .82rem; padding: .3rem .6rem; }
+.tema-ospite { display: flex; justify-content: flex-end; padding: 12px 16px 0; }

@@ -4,6 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('titolo', 'Dashboard') — OEE e CCP ASE</title>
+    <script>
+        /* Tema scelto dall'utente (chiaro/scuro/automatico), applicato prima del disegno della pagina */
+        (function () { try { var t = localStorage.getItem('tema'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {} })();
+    </script>
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     @stack('testa')
 </head>
@@ -23,11 +27,15 @@
         @endif
     </nav>
     <div class="utente">
+        @include('parziali.tema')
         <span>{{ auth()->user()->name }} · {{ auth()->user()->etichettaRuolo() }}</span>
         <form method="post" action="{{ route('logout') }}" class="in-linea">@csrf<button class="secondario">Esci</button></form>
     </div>
 </header>
 @endauth
+@guest
+<div class="tema-ospite">@include('parziali.tema')</div>
+@endguest
 <main class="contenuto">
     @auth
         @isset($statoSync)
@@ -48,6 +56,7 @@
     @endif
     @yield('contenuto')
 </main>
+<script src="{{ asset('js/tema.js') }}"></script>
 @stack('script')
 </body>
 </html>

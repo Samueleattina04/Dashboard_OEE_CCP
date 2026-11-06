@@ -10,5 +10,6 @@
         <label>Password<input type="password" name="password" required autocomplete="current-password"></label>
         <button>Accedi</button>
     </form>
+    <p class="piccolo" style="margin-top:1rem"><a href="{{ route('password.dimenticata') }}">Password dimenticata?</a></p>
 </div>
 @endsection

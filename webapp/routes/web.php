@@ -15,6 +15,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AccessoController::class, 'login'])->middleware('throttle:5,1');
     Route::get('/invito/{token}', [AccessoController::class, 'mostraInvito'])->name('invito.mostra');
     Route::post('/invito/{token}', [AccessoController::class, 'accettaInvito'])->middleware('throttle:10,1')->name('invito.accetta');
+    Route::get('/password-dimenticata', [AccessoController::class, 'mostraPasswordDimenticata'])->name('password.dimenticata');
+    Route::post('/password-dimenticata', [AccessoController::class, 'richiediReset'])->middleware('throttle:3,10');
+    Route::get('/reimposta/{token}', [AccessoController::class, 'mostraReset'])->name('reset.mostra');
+    Route::post('/reimposta/{token}', [AccessoController::class, 'applicaReset'])->middleware('throttle:10,1')->name('reset.applica');
 });
 Route::post('/logout', [AccessoController::class, 'logout'])->middleware('auth')->name('logout');
 
@@ -50,4 +54,6 @@ Route::middleware(['auth', 'ruolo:superadmin'])->prefix('admin')->name('admin.')
     Route::post('/utenti/invita', [UtentiController::class, 'invita'])->name('utenti.invita');
     Route::post('/utenti/{utente}', [UtentiController::class, 'aggiorna'])->name('utenti.aggiorna');
     Route::delete('/inviti/{id}', [UtentiController::class, 'revocaInvito'])->name('inviti.revoca');
+    Route::post('/utenti/{utente}/reimposta-password', [UtentiController::class, 'reimpostaPassword'])->name('utenti.reset');
+    Route::post('/richieste-reset/{id}/archivia', [UtentiController::class, 'ignoraRichiesta'])->name('richieste.archivia');
 });

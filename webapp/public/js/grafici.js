@@ -10,10 +10,12 @@
     ['NON_CLASSIFICATO', 'Non classificato', '--s-non-classificato'],
     ['SENZA_DATO', 'Senza dato', '--s-senza-dato'],
   ];
-  const css = getComputedStyle(document.documentElement);
-  const v = (n) => css.getPropertyValue(n).trim();
+  const v = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   const fmt = (x) => x.toLocaleString('it-IT', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
+  const grafici = [];
+  const disegna = () => {
+  grafici.splice(0).forEach((g) => g.dispose());
   document.querySelectorAll('.grafico[id^="grafico-"]').forEach((el) => {
     const n = el.id.split('-')[1];
     const dati = JSON.parse(document.getElementById('dati-' + n).textContent);
@@ -36,6 +38,11 @@
       yAxis: { type: 'value', max: 24, interval: 6, axisLabel: { color: v('--testo-3'), formatter: '{value} h' }, splitLine: { lineStyle: { color: v('--bordo') } } },
       series: serie,
     });
-    window.addEventListener('resize', () => grafico.resize());
+    grafici.push(grafico);
   });
+  };
+  disegna();
+  window.addEventListener('resize', () => grafici.forEach((g) => g.resize()));
+  // Cambio tema: si ridisegna con i colori del nuovo tema
+  document.addEventListener('tema-cambiato', disegna);
 })();

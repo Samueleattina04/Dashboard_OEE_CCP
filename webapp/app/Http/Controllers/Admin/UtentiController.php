@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Mail\InvitoDashboard;
 use App\Models\User;
+use App\Services\ReimpostazionePassword;
 use App\Support\Audit;
+use App\Support\LogAccessi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +25,7 @@ class UtentiController extends Controller
         return view('admin.utenti', [
             'utenti' => User::orderBy('name')->get(),
             'inviti' => DB::table('inviti')->whereNull('usato_il')->where('scade_il', '>', now())->orderByDesc('created_at')->get(),
+            'richieste' => DB::table('richieste_reset_password')->whereNull('gestita_il')->orderByDesc('created_at')->get(),
         ]);
     }
 
@@ -77,5 +80,26 @@ class UtentiController extends Controller
         Audit::registra('modifica', $utente, $prima);
 
         return back()->with('ok', "Utente {$utente->email} aggiornato.");
+    }
+
+    /** Crea un link di reimpostazione (24 h, monouso), lo invia all'utente e lo mostra al SuperAdmin. */
+    public function reimpostaPassword(Request $request, User $utente, ReimpostazionePassword $servizio)
+    {
+        $esito = $servizio->creaLink($utente);
+        LogAccessi::registra($request, 'reset_creato', Auth::id(), $utente->email);
+
+        return back()
+            ->with('ok', $esito['email_inviata']
+                ? "Link di reimpostazione inviato a {$utente->email}."
+                : "Email non inviata a {$utente->email}: consegna il link manualmente.")
+            ->with('link_reset', $esito['link']);
+    }
+
+    public function ignoraRichiesta(int $id)
+    {
+        DB::table('richieste_reset_password')->where('id', $id)
+            ->update(['gestita_il' => now(), 'gestita_da' => Auth::id(), 'updated_at' => now()]);
+
+        return back()->with('ok', 'Richiesta archiviata.');
     }
 }

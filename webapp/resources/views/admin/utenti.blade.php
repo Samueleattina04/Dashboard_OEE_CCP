@@ -3,6 +3,27 @@
 @section('contenuto')
 @php($F = \App\Support\Formato::class)
 <h1>Utenti</h1>
+@if ($richieste->isNotEmpty())
+    <section class="pannello" style="border-color:var(--avviso-bordo)">
+        <h2>Richieste di reimpostazione password ({{ $richieste->count() }})</h2>
+        <table>
+            <thead><tr><th>Email</th><th>Richiesta il</th><th></th></tr></thead>
+            <tbody>
+            @foreach ($richieste as $r)
+                @php($u = $utenti->firstWhere('email', $r->email))
+                <tr><td>{{ $r->email }}</td><td>{{ $F::oraLocale($r->created_at) }}</td>
+                    <td class="riga-flex">
+                        @if ($u)<form method="post" action="{{ route('admin.utenti.reset', $u) }}">@csrf<button>Invia link di reimpostazione</button></form>@endif
+                        <form method="post" action="{{ route('admin.richieste.archivia', $r->id) }}">@csrf<button class="secondario">Archivia</button></form>
+                    </td></tr>
+            @endforeach
+            </tbody>
+        </table>
+    </section>
+@endif
+@if (session('link_reset'))
+    <div class="banda avviso">Link di reimpostazione password (mostrato solo ora, valido 24 ore, utilizzabile una volta):<br><code style="word-break:break-all">{{ session('link_reset') }}</code></div>
+@endif
 @if (session('link_invito'))
     <div class="banda avviso">Link di invito (mostrato solo ora, valido 7 giorni):<br><code style="word-break:break-all">{{ session('link_invito') }}</code></div>
 @endif
@@ -31,7 +52,10 @@
                 <td>{{ $u->name }}</td><td>{{ $u->email }}</td>
                 <td><select name="ruolo" form="u-{{ $u->id }}">@foreach (\App\Models\User::RUOLI as $k => $v)<option value="{{ $k }}" @selected($u->ruolo === $k)>{{ $v }}</option>@endforeach</select></td>
                 <td><select name="attivo" form="u-{{ $u->id }}"><option value="1" @selected($u->attivo)>Sì</option><option value="0" @selected(! $u->attivo)>No</option></select></td>
-                <td><form method="post" id="u-{{ $u->id }}" action="{{ route('admin.utenti.aggiorna', $u) }}">@csrf<button class="secondario">Salva</button></form></td>
+                <td class="riga-flex">
+                    <form method="post" id="u-{{ $u->id }}" action="{{ route('admin.utenti.aggiorna', $u) }}">@csrf<button class="secondario">Salva</button></form>
+                    <form method="post" action="{{ route('admin.utenti.reset', $u) }}" onsubmit="return confirm('Creare un link di reimpostazione password per {{ $u->email }}?')">@csrf<button class="secondario">Reimposta password</button></form>
+                </td>
             </tr>
         @endforeach
         </tbody>
