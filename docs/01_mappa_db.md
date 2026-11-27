@@ -397,3 +397,18 @@ In ogni caso **servono dati che il MES non ha**, da gestire in configurazione da
 - **Da 21/01/2025 (PELAB) e 27/01/2025 (ULMA)**: è aperto in permanenza un task di prova (PELAB `00005910` "Articolo per PE Labellers", ULMA `00006110` "Sgusciato 10 Kg"). NetPro registra ogni giorno 3 righe (00–07, 07–16, 16–24) **24 h su 24, festivi compresi** (744 h/mese), come `WORK` per PELAB e come `WSET` (attrezzaggio) per ULMA, con **quantità sempre a 0**.
 
 Conclusione: per HEUFT, ULMA e PELAB l'unica fonte reale sono i segnali in tempo reale di FDI (`FIOLINES`, solo ultimo valore). Per avere uno storico serve che **Qualitas aggiunga la regola `DATINF … CHANNEL=HIST`** in FDI (come per forno e selezionatrice), oppure che la dashboard campioni `FIOLINES`.
+
+---
+
+## 13. Nuova selezionatrice FX10282 (giro 9, 27/11/2026)
+
+- Anagrafica NetPro: `FX10282` "Selezionatrice Fenix 3UVision", centro SELEZIONATRICI, task di prova `TEST_20261164_110`.
+- Storico `FPROCESSDATA` canale HIST **dal 24/11/2026 17:36**; 5 segnali in `FIOLINES` identici a FX10130.
+- **Stessa struttura di FX10130** (verificata sui valori): `FBATCH` = ricetta in uso (es. "USA SGUSCIATO INT_ROTT -N-2026 ( IA ) OK"), `FVALUE01` = `CurrentSmState` (Selecting 104, Ready 28, Cleaning 9, CleaningMachine 1 campioni), `FVALUE02` = pressione, `FVALUE03/04` = livelli tramogge, `FNVALUE01–12` come FX10130. Controllo: `FNVALUE04 + FNVALUE06` = `FNVALUE08` (5.372,04 + 5.925,70 = 11.297,74).
+- La configurazione della dashboard di FX10130 si può quindi copiare (Configurazione → Macchine NetPro non ancora in dashboard).
+
+### Nuove anomalie
+| # | Anomalia | Evidenza |
+|---|---|---|
+| A13 | **FX10282: il totale kg scartati (`FNVALUE07`) è quello di FX10130**: 706,92140 / 706,91643 negli stessi istanti, mentre gli scarti per sezione di FX10282 sono 719,45 + 1.248,25. Probabile copia della configurazione FDI che punta ancora alle variabili di FX10130 (oltre all'anomalia A2 sulla formula). La dashboard non ne è toccata: usa gli scarti per sezione (`FNVALUE03`/`05`). | giro 9 |
+| A14 | **Buchi simultanei sulle due selezionatrici** (es. 26/11 20:07→22:07, 27/11 02:52→04:52, 06:22→08:07): i record mancano sulle due macchine negli stessi intervalli. Indica un problema del servizio FDI_OPC o della raccolta, non delle macchine. | giro 9 |

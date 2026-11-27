@@ -37,6 +37,8 @@ Legenda: 🔴 urgente / blocca qualcosa · 🟠 importante · 🟢 quando possib
 ## E. Da chiedere a terzi
 
 **Qualitas (fornitore MES/FDI)**
+- [ ] 🟠 **A13 — FX10282**: il totale kg scartati (`FNVALUE07`) riporta il valore di FX10130 (configurazione FDI copiata?).
+- [ ] 🟠 **A14 — Buchi simultanei** nei record di FX10130 e FX10282 (es. 27/11 02:52→04:52 e 06:22→08:07): problema del servizio FDI_OPC?
 - [ ] 🟠 **FX10130 smette di inviare dati per lunghi periodi**: nessun record da febbraio a maggio 2026, mesi parziali dopo, ultimo campione il 04/11/2026 09:15. Perché il connettore OPC perde la comunicazione?
 - [ ] 🟠 **A2 — Formula scarti FX10130**: in `RejectedProductKg` sembra mancare il `+` tra sezione 1 e 2 (`Server\FDI_OPC\config\Config.json`).
 - [ ] 🟠 **A9 — Forno**: la variabile che FDI chiama `STATO_MACCHINA` è in realtà `STATO_ORDINE` del PLC; il forno non trasmette uno stato marcia/fermo.
