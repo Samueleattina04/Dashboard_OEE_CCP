@@ -27,6 +27,40 @@
         <span class="piccolo muto">Il job automatico gira ogni 15 minuti; per lo storico iniziale usare il comando <code>php artisan mes:storico</code>.</span></form>
 </section>
 
+@if ($nonConfigurate->isNotEmpty())
+<section class="pannello">
+    <h2>Macchine NetPro non ancora in dashboard ({{ $nonConfigurate->count() }})</h2>
+    <p class="piccolo muto">Elenco aggiornato da NetPro live. Per aggiungerne una scegli una macchina già configurata da cui copiare
+        colonne lette da FPROCESSDATA, regola di stato e calendario: fallo solo se il significato delle colonne è lo stesso
+        (es. due selezionatrici identiche). La macchina deve avere uno storico in FPROCESSDATA.</p>
+    <div class="scorri">
+    <table>
+        <thead><tr><th>Codice</th><th>Descrizione</th><th>Centro</th><th>Aggiungi copiando la configurazione di</th></tr></thead>
+        <tbody>
+        @foreach ($nonConfigurate as $n)
+            <tr>
+                <td><code>{{ $n->codice }}</code></td><td>{{ $n->descrizione }}</td><td>{{ $n->centro }}</td>
+                <td>
+                    <form method="post" action="{{ route('admin.macchina.aggiungi') }}" class="riga-flex" style="gap:.4rem"
+                          onsubmit="return confirm('Aggiungere {{ $n->codice }} copiando la configurazione della macchina scelta?')">
+                        @csrf
+                        <input type="hidden" name="codice" value="{{ $n->codice }}">
+                        <input type="hidden" name="descrizione" value="{{ $n->descrizione ?: $n->codice }}">
+                        <select name="modello_id" required aria-label="Macchina modello">
+                            <option value="">scegli…</option>
+                            @foreach ($macchine->filter(fn ($x) => $x->regola_attuale) as $mm)<option value="{{ $mm->id }}">{{ $mm->codice }}</option>@endforeach
+                        </select>
+                        <button class="secondario">Aggiungi</button>
+                    </form>
+                </td>
+            </tr>
+        @endforeach
+        </tbody>
+    </table>
+    </div>
+</section>
+@endif
+
 @foreach ($macchine->where('attiva', true) as $m)
 <section class="pannello">
     <h2>{{ $m->codice }} · {{ $m->descrizione }}</h2>

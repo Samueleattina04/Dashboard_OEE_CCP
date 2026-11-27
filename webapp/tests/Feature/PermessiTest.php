@@ -89,4 +89,29 @@ class PermessiTest extends TestCase
         $this->assertSame('110', $forno->regole()->whereNull('valido_al')->first()->parametri['soglia_marcia']);
         $this->assertSame(2, DB::table('audit_modifiche')->where('tabella', 'regole_stato')->count());
     }
+
+    public function test_aggiunta_macchina_copiando_la_configurazione(): void
+    {
+        $this->seed(MacchineSeeder::class);
+        DB::table('netpro_macchine')->insert(['codice' => 'FX10282', 'descrizione' => 'Selezionatrice Fenix 3UVision',
+            'centro' => 'SELEZIONATRICI', 'stato' => '{}', 'letto_il' => now()]);
+        $admin = $this->utente('admin');
+        $this->actingAs($admin)->get('/admin/configurazione')->assertSee('FX10282')->assertSee('Macchine NetPro non ancora in dashboard');
+
+        $fx = Macchina::where('codice', 'FX10130')->first();
+        $this->actingAs($admin)->post('/admin/macchine/aggiungi', [
+            'codice' => 'FX10282', 'descrizione' => 'Selezionatrice Fenix 3UVision', 'modello_id' => $fx->id,
+        ])->assertSessionHas('ok');
+
+        $nuova = Macchina::where('codice', 'FX10282')->first();
+        $this->assertTrue($nuova->attiva);
+        $this->assertSame($fx->colonne_import, $nuova->colonne_import);
+        $this->assertSame($fx->regolaAttuale()->parametri, $nuova->regolaAttuale()->parametri);
+        $this->assertSame('Copiata da FX10130', $nuova->regolaAttuale()->note);
+        // Una seconda aggiunta dello stesso codice è rifiutata; i ruoli non admin non possono aggiungere
+        $this->actingAs($admin)->post('/admin/macchine/aggiungi', ['codice' => 'FX10282', 'descrizione' => 'x', 'modello_id' => $fx->id])
+            ->assertSessionHasErrors('codice');
+        $this->actingAs($this->utente('direzione'))->post('/admin/macchine/aggiungi', ['codice' => 'X', 'descrizione' => 'x', 'modello_id' => $fx->id])
+            ->assertForbidden();
+    }
 }

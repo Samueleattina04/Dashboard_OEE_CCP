@@ -43,6 +43,9 @@ class ConfigurazioneController extends Controller
             'calendari' => CalendarioTurni::with(['turni' => fn ($q) => $q->orderBy('giorno_settimana')->orderBy('ora_inizio')])
                 ->with(['eccezioni' => fn ($q) => $q->orderByDesc('data')->limit(50)])->get(),
             'sync' => SyncMes::with([])->get()->keyBy('macchina_id'),
+            // Macchine dell'anagrafica NetPro (lette da NetPro live) non ancora configurate nella dashboard
+            'nonConfigurate' => DB::table('netpro_macchine')->whereNotIn('codice', $macchine->pluck('codice'))
+                ->orderBy('codice')->get(['codice', 'descrizione', 'centro']),
             'stati' => StatoMacchina::cases(),
         ]);
     }
@@ -110,6 +113,40 @@ class ConfigurazioneController extends Controller
         $n = $this->ricalcolaDa($ricalcolo, $macchina, $comune['valido_dal']);
 
         return back()->with('ok', "Regola di {$macchina->codice} aggiornata dal {$comune['valido_dal']}: ricalcolati {$n} giorni.");
+    }
+
+    /**
+     * Aggiunge una macchina NetPro copiando colonne importate, regola di stato e calendario da una macchina già
+     * configurata (scelta esplicita dell'Admin: la dashboard non deduce il significato delle colonne).
+     */
+    public function aggiungiMacchina(Request $request)
+    {
+        $dati = $request->validate([
+            'codice' => ['required', 'string', 'max:40', 'unique:macchine,codice', 'exists:netpro_macchine,codice'],
+            'descrizione' => ['required', 'string', 'max:120'],
+            'modello_id' => ['required', 'exists:macchine,id'],
+        ]);
+        $modello = Macchina::findOrFail($dati['modello_id']);
+        $regolaModello = $modello->regolaAttuale();
+        abort_if(! $regolaModello, 422, 'La macchina modello non ha una regola di stato.');
+
+        $nuova = DB::transaction(function () use ($dati, $modello, $regolaModello) {
+            $nuova = Macchina::create([
+                'codice' => $dati['codice'], 'descrizione' => $dati['descrizione'], 'attiva' => true,
+                'colonne_import' => $modello->colonne_import, 'calendario_id' => $modello->calendario_id,
+            ]);
+            Audit::registra('creazione', $nuova);
+            $regola = RegolaStato::create([
+                'macchina_id' => $nuova->id, 'tipo' => $regolaModello->tipo, 'parametri' => $regolaModello->parametri,
+                'valido_dal' => '2000-01-01 00:00:00', 'note' => "Copiata da {$modello->codice}", 'creato_da' => Auth::id(),
+            ]);
+            Audit::registra('creazione', $regola);
+
+            return $nuova;
+        });
+
+        return back()->with('ok', "{$nuova->codice} aggiunta con la configurazione di {$modello->codice}. "
+            .'Premi "Importa ora" per caricare i suoi dati dal MES (o attendi il prossimo quarto d\'ora).');
     }
 
     /** Attiva/disattiva una macchina (le macchine non attive non vengono importate né mostrate). */
@@ -252,6 +289,8 @@ class ConfigurazioneController extends Controller
     /** Importazione immediata dal MES (stessa query del job ogni 15 minuti). */
     public function importaOra()
     {
+        // Una macchina appena aggiunta viene importata dall'inizio del suo storico: può richiedere qualche minuto
+        set_time_limit(900);
         try {
             Artisan::call('mes:importa');
             $esito = trim(Artisan::output());
